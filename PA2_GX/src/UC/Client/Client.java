@@ -1,72 +1,30 @@
 package UC.Client;
 
+import java.awt.Color;
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import static java.lang.Integer.parseInt;
 import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingWorker;
 
 public class Client extends javax.swing.JFrame {
-    
+            
     private int numberOfRequests;
     private int id;
     private int portId;
     private int numberOfRequestsRejected;
-    private Socket connectedSocket;
+    private Socket connectedSocket;   
 
     public Client() throws IOException {
         initComponents();
-        getIdFromLoadBalancer();
-    }
-    
-    public int getIdFromLoadBalancer()
-    {
-        Socket s = null;
-        try {
-            s = new Socket("localhost",portId);
-        } catch (IOException ex) {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("No LoadBalancer Found on Port "+portId);
-        }
-        
-        this.connectedSocket = s;
-
-        // get the output stream from the socket.
-        OutputStream outputStream = null;
-        try {
-            outputStream = s.getOutputStream();
-        } catch (IOException ex) {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-        try {
-           InputStream inputStream = s.getInputStream();
-        } catch (IOException ex) {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-        // create a data output stream from the output stream so we can send data through it
-        DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
-        String request = "ImAlive";
-        System.out.println("Sending string to the ServerSocket");
-
-        try{
-            dataOutputStream.writeUTF(request);
-            dataOutputStream.flush();  
-            
-        }catch (IOException e ){
-            e.printStackTrace();
-        }
-        
-            
-        
-        
-        return 0;
+        CONNECTIONREADYLabel.setVisible(false);
     }
  
     /**
@@ -78,51 +36,214 @@ public class Client extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jButton1 = new javax.swing.JButton();
+        ConBut = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        IDLabel = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        PORTTextField = new javax.swing.JTextField();
+        CONNECTIONREADYLabel = new javax.swing.JLabel();
+        ReqBut = new javax.swing.JButton();
+        DiscBut = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jButton1.setText("Start");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        ConBut.setText("Connect");
+        ConBut.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                ConButActionPerformed(evt);
             }
         });
 
         jLabel1.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         jLabel1.setText("Client");
 
+        jLabel2.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        jLabel2.setText("Client ID:");
+
+        IDLabel.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        IDLabel.setText("Waiting");
+
+        jLabel3.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        jLabel3.setText("Ip/Port:");
+
+        PORTTextField.setText("7777");
+        PORTTextField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                PORTTextFieldActionPerformed(evt);
+            }
+        });
+
+        CONNECTIONREADYLabel.setFont(new java.awt.Font("Arial Black", 0, 11)); // NOI18N
+        CONNECTIONREADYLabel.setForeground(new java.awt.Color(0, 100, 0));
+        CONNECTIONREADYLabel.setText("Ready to Send Requests!");
+
+        ReqBut.setText("Request");
+        ReqBut.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ReqButActionPerformed(evt);
+            }
+        });
+
+        DiscBut.setText("Disconnect");
+        DiscBut.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                DiscButActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(174, 174, 174)
-                .addComponent(jLabel1)
-                .addContainerGap(185, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(39, 39, 39))
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(IDLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel1)
+                        .addGap(45, 45, 45))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(PORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(DiscBut, javax.swing.GroupLayout.DEFAULT_SIZE, 104, Short.MAX_VALUE)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addComponent(ReqBut, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(ConBut, javax.swing.GroupLayout.DEFAULT_SIZE, 104, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 19, Short.MAX_VALUE)
+                        .addComponent(CONNECTIONREADYLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(81, 81, 81)
-                .addComponent(jButton1)
-                .addContainerGap(133, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2)
+                    .addComponent(IDLabel))
+                .addGap(34, 34, 34)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(PORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ConBut)
+                    .addComponent(CONNECTIONREADYLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(DiscBut)
+                .addGap(18, 18, 18)
+                .addComponent(ReqBut)
+                .addContainerGap(110, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        numberOfRequests++;
-        ClientRequest clientRequest = new ClientRequest(id*1000+numberOfRequests,portId);
-    }//GEN-LAST:event_jButton1ActionPerformed
+    private void ConButActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ConButActionPerformed
+        
+        if(this.connectedSocket != null)
+        {
+            //To avoid spamming connect key
+            return;
+        }
+    
+        SwingWorker worker = new SwingWorker<Boolean, Integer>() {     
+          
+          @Override
+          protected Boolean doInBackground() throws Exception {
+                portId = parseInt(PORTTextField.getText());
+                Socket s = null;
+                try {
+                    s = new Socket("localhost",portId);
+                } catch (IOException ex) {
+                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                    System.out.println("No LoadBalancer Found on Port "+portId);
+                    CONNECTIONREADYLabel.setForeground(Color.red);
+                    CONNECTIONREADYLabel.setText("Error Connecting to Ip/Port");
+                    CONNECTIONREADYLabel.setVisible(true); 
+                    connectedSocket = null;
+                    return false;
+                }
+                CONNECTIONREADYLabel.setForeground(new java.awt.Color(0, 100, 0));
+                CONNECTIONREADYLabel.setText("Ready to Send Requests!");
+                CONNECTIONREADYLabel.setVisible(true);
+                connectedSocket = s;
+
+                // get the output stream from the socket.
+                OutputStream outputStream = null;
+                try {
+                    outputStream = s.getOutputStream();
+                } catch (IOException ex) {
+                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                InputStream inputStream = null;
+                try {
+                  inputStream = s.getInputStream();
+                } catch (IOException ex) {
+                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+                // create a data output stream from the output stream so we can send data through it
+                DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
+                DataInputStream dataInputStream = new DataInputStream(inputStream);
+                String request = "ImAlive";
+                System.out.println("Sending ImAlive to LoadBalancer");
+
+                try{
+                    dataOutputStream.writeUTF(request);
+                    dataOutputStream.flush(); 
+                    String str = dataInputStream.readUTF(); 
+                    id = parseInt(str);
+                    System.out.println("My Id is->"+id);
+                    IDLabel.setText(String.valueOf(id));
+                }catch (IOException e ){
+                }
+
+                return true;
+          }
+
+          protected void process(Integer chunks) {
+          }
+
+          @Override
+          protected void done() {
+          }
+        };
+        worker.execute();
+    }//GEN-LAST:event_ConButActionPerformed
+
+    private void PORTTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_PORTTextFieldActionPerformed
+
+    }//GEN-LAST:event_PORTTextFieldActionPerformed
+
+    private void ReqButActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ReqButActionPerformed
+        if(this.connectedSocket == null)
+        {
+            return;
+        }
+    }//GEN-LAST:event_ReqButActionPerformed
+
+    private void DiscButActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DiscButActionPerformed
+        if(this.connectedSocket == null)
+        {
+            return;
+        }
+        try {
+            this.connectedSocket.close();
+        } catch (IOException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        CONNECTIONREADYLabel.setForeground(Color.yellow);
+        CONNECTIONREADYLabel.setText("Disconnected");
+        CONNECTIONREADYLabel.setVisible(true);      
+        IDLabel.setText("Waiting");
+        this.connectedSocket = null;
+    }//GEN-LAST:event_DiscButActionPerformed
 
     /**
      * @param args the command line arguments
@@ -165,7 +286,14 @@ public class Client extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
+    private javax.swing.JLabel CONNECTIONREADYLabel;
+    private javax.swing.JButton ConBut;
+    private javax.swing.JButton DiscBut;
+    private javax.swing.JLabel IDLabel;
+    private javax.swing.JTextField PORTTextField;
+    private javax.swing.JButton ReqBut;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     // End of variables declaration//GEN-END:variables
 }
