@@ -19,8 +19,11 @@ public class LoadBalancer extends javax.swing.JFrame {
     
               
     private int numberOfClients = 0;
+    private int numberOfServers = 0;
     private int serverPort;
-    private ServerSocket serverSocket; 
+    private int serverPortServer;
+    private Socket serverSocketServer;
+    private Socket serverSocketClient; 
     
     public LoadBalancer() throws IOException {
         initComponents();
@@ -41,6 +44,8 @@ public class LoadBalancer extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         PORTTextField = new javax.swing.JTextField();
         STATUSLabel = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        SERVERPORTTextField = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -55,13 +60,23 @@ public class LoadBalancer extends javax.swing.JFrame {
         jLabel1.setText("LoadBalancer");
 
         jLabel2.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        jLabel2.setText("Entry Port:");
+        jLabel2.setText("Client Port:");
 
         PORTTextField.setText("7777");
 
         STATUSLabel.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
         STATUSLabel.setForeground(new java.awt.Color(0, 100, 0));
         STATUSLabel.setText("Online");
+
+        jLabel3.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        jLabel3.setText("Server Port:");
+
+        SERVERPORTTextField.setText("9999");
+        SERVERPORTTextField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                SERVERPORTTextFieldActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -70,31 +85,43 @@ public class LoadBalancer extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel2)
+                    .addComponent(jLabel3))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(SERVERPORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(STATUSLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
                         .addComponent(PORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 46, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 40, Short.MAX_VALUE)
                         .addComponent(jLabel1)
-                        .addGap(40, 40, 40))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(STATUSLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addGap(40, 40, 40))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel2)
-                    .addComponent(PORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(STATUSLabel)
-                .addContainerGap(206, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel2)
+                            .addComponent(PORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(jButton1)
+                        .addGap(2, 2, 2)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel3)
+                        .addComponent(SERVERPORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(STATUSLabel))
+                .addContainerGap(204, Short.MAX_VALUE))
         );
 
         pack();
@@ -102,14 +129,14 @@ public class LoadBalancer extends javax.swing.JFrame {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
 
-          if(serverSocket != null)
+          if(serverSocketClient != null)
           {
               return;
           }
           
-          
          try {
-            serverPort = parseInt(PORTTextField.getText());      
+            serverPort = parseInt(PORTTextField.getText());   
+            serverPortServer = parseInt(SERVERPORTTextField.getText());
           } catch (NumberFormatException ex) {
             Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
             STATUSLabel.setForeground(Color.red);
@@ -119,6 +146,86 @@ public class LoadBalancer extends javax.swing.JFrame {
           }
         
           SwingWorker worker = new SwingWorker<Boolean, Integer>() {
+
+          @Override
+          protected Boolean doInBackground() throws Exception {
+              {      
+                ServerSocket serverSocket = null;
+                try {
+                    serverSocket = new ServerSocket(serverPortServer);  
+                } catch (IOException ex) {
+                    Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
+                    STATUSLabel.setForeground(Color.red);
+                    STATUSLabel.setText("Error Creating Server :/");
+                    STATUSLabel.setVisible(true); 
+                    return false;
+                }
+                
+                STATUSLabel.setForeground(new java.awt.Color(0, 100, 0));
+                STATUSLabel.setText("ONLINE!");
+                STATUSLabel.setVisible(true);                
+                
+                
+                while(true)
+                {
+                    Socket s2 = null;
+                    try {
+                        s2 = serverSocket.accept();
+                        serverSocketServer = s2;
+                    } catch (IOException ex) {
+                        Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
+                        System.exit(1);
+                    }
+
+                    InputStream inputStream2 = null;
+                    try {
+                        inputStream2 = s2.getInputStream();
+                    } catch (IOException ex) {
+                        Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                    DataInputStream dataInputStream2 = new DataInputStream(inputStream2);
+                    OutputStream outputStream = s2.getOutputStream();
+                    DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
+                    try {  
+                        String str = dataInputStream2.readUTF();                         
+                        if("ImAliveServer".equals(str))
+                        {
+                            System.out.println("Sending new Server ID->"+numberOfServers);
+                            dataOutputStream.writeUTF(String.valueOf(numberOfServers)+";Server");
+                            dataOutputStream.flush();
+                            numberOfServers++;
+                        }
+                        if("ImAliveClient".equals(str))
+                        {
+                            System.out.println("CLIENT TRIED TO ENTER PORT SERVER");
+                            dataOutputStream.writeUTF("999;Server");
+                            dataOutputStream.flush();                            
+                        }
+
+                    } catch (IOException ex) {
+                        Logger.getLogger(LoadBalancer.class.getName()).log(Level.INFO, null, ex);
+                        try {
+                            s2.close();
+                        } catch (IOException ex1) {
+                            Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex1);
+                        }
+                    }
+                }  
+            }
+          }
+
+          protected void process(Integer chunks) {
+          }
+
+          @Override
+          protected void done() {
+            System.out.println("Done");
+          }
+        };
+        worker.execute();
+        
+        SwingWorker workerServer = new SwingWorker<Boolean, Integer>() {
 
           @Override
           protected Boolean doInBackground() throws Exception {
@@ -144,6 +251,7 @@ public class LoadBalancer extends javax.swing.JFrame {
                     Socket s2 = null;
                     try {
                         s2 = serverSocket.accept();
+                        serverSocketClient = s2;                        
                     } catch (IOException ex) {
                         Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
                         System.exit(1);
@@ -160,17 +268,26 @@ public class LoadBalancer extends javax.swing.JFrame {
                     OutputStream outputStream = s2.getOutputStream();
                     DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
                     try {  
-                        String str = dataInputStream2.readUTF();                    
-                        String[] arrOfStr = str.split(";",-2);
-                        if("ImAlive".equals(str))
+                        String str = dataInputStream2.readUTF();               
+                        if("ImAliveClient".equals(str))
                         {
                             System.out.println("Sending new Client ID->"+numberOfClients);
-                            dataOutputStream.writeUTF(String.valueOf(numberOfClients));
+                            dataOutputStream.writeUTF(String.valueOf(numberOfClients)+";Client");
                             numberOfClients++;
                         }
+                        else if("ImAliveServer".equals(str))
+                        {
+                            System.out.println("SERVER TRIED TO ENTER CLIENT");
+                            dataOutputStream.writeUTF("999;Client");
+                            dataOutputStream.flush();                            
+                        }                        
                         else
                         {
-                            //Create a thread to send request to server
+                            //Escolher melhor Servidor para enviar info
+                            System.out.println("else- "+str);
+                            LoadBalancerRequest loadBalancerRequest = new LoadBalancerRequest(str,serverSocketServer,serverSocketClient); 
+                            loadBalancerRequest.run();
+                           
                         }
 
                     } catch (IOException ex) {
@@ -193,8 +310,12 @@ public class LoadBalancer extends javax.swing.JFrame {
             System.out.println("Done");
           }
         };
-        worker.execute();
+        workerServer.execute();
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void SERVERPORTTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SERVERPORTTextFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_SERVERPORTTextFieldActionPerformed
 
     /**
      * @param args the command line arguments
@@ -238,9 +359,11 @@ public class LoadBalancer extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField PORTTextField;
+    private javax.swing.JTextField SERVERPORTTextField;
     private javax.swing.JLabel STATUSLabel;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     // End of variables declaration//GEN-END:variables
 }

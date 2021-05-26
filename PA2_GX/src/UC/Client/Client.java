@@ -15,18 +15,18 @@ import java.util.logging.Logger;
 import javax.swing.SwingWorker;
 
 public class Client extends javax.swing.JFrame {
-            
+
     private int numberOfRequests;
     private int id;
     private int portId;
     private int numberOfRequestsRejected;
-    private Socket connectedSocket;   
+    private Socket connectedSocket;
 
     public Client() throws IOException {
         initComponents();
         CONNECTIONREADYLabel.setVisible(false);
     }
- 
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -145,27 +145,26 @@ public class Client extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void ConButActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ConButActionPerformed
-        
-        if(this.connectedSocket != null)
-        {
+
+        if (this.connectedSocket != null) {
             //To avoid spamming connect key
             return;
         }
-    
-        SwingWorker worker = new SwingWorker<Boolean, Integer>() {     
-          
-          @Override
-          protected Boolean doInBackground() throws Exception {
+
+        SwingWorker worker = new SwingWorker<Boolean, Integer>() {
+
+            @Override
+            protected Boolean doInBackground() throws Exception {
                 portId = parseInt(PORTTextField.getText());
                 Socket s = null;
                 try {
-                    s = new Socket("localhost",portId);
+                    s = new Socket("localhost", portId);
                 } catch (IOException ex) {
                     Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-                    System.out.println("No LoadBalancer Found on Port "+portId);
+                    System.out.println("No LoadBalancer Found on Port " + portId);
                     CONNECTIONREADYLabel.setForeground(Color.red);
                     CONNECTIONREADYLabel.setText("Error Connecting to Ip/Port");
-                    CONNECTIONREADYLabel.setVisible(true); 
+                    CONNECTIONREADYLabel.setVisible(true);
                     connectedSocket = null;
                     return false;
                 }
@@ -183,7 +182,7 @@ public class Client extends javax.swing.JFrame {
                 }
                 InputStream inputStream = null;
                 try {
-                  inputStream = s.getInputStream();
+                    inputStream = s.getInputStream();
                 } catch (IOException ex) {
                     Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -191,28 +190,38 @@ public class Client extends javax.swing.JFrame {
                 // create a data output stream from the output stream so we can send data through it
                 DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
                 DataInputStream dataInputStream = new DataInputStream(inputStream);
-                String request = "ImAlive";
+                String request = "ImAliveClient";
                 System.out.println("Sending ImAlive to LoadBalancer");
 
-                try{
+                try {
                     dataOutputStream.writeUTF(request);
-                    dataOutputStream.flush(); 
-                    String str = dataInputStream.readUTF(); 
-                    id = parseInt(str);
-                    System.out.println("My Id is->"+id);
+                    dataOutputStream.flush();
+                    String str = dataInputStream.readUTF();
+                    String[] arrOfStr = str.split(";",-2);
+                    if(!arrOfStr[1].equals("Client"))
+                    {
+                        System.out.println("MISTAKE-SERVER PORT");
+                        CONNECTIONREADYLabel.setForeground(Color.red);
+                        CONNECTIONREADYLabel.setText("Error/Dont Pick Server Port");
+                        CONNECTIONREADYLabel.setVisible(true);
+                        connectedSocket = null;                        
+                        return false;
+                    }
+                    id = parseInt(arrOfStr[0]);
+                    System.out.println("My Id is->" + id);
                     IDLabel.setText(String.valueOf(id));
-                }catch (IOException e ){
+                } catch (IOException e) {
                 }
 
                 return true;
-          }
+            }
 
-          protected void process(Integer chunks) {
-          }
+            protected void process(Integer chunks) {
+            }
 
-          @Override
-          protected void done() {
-          }
+            @Override
+            protected void done() {
+            }
         };
         worker.execute();
     }//GEN-LAST:event_ConButActionPerformed
@@ -222,15 +231,16 @@ public class Client extends javax.swing.JFrame {
     }//GEN-LAST:event_PORTTextFieldActionPerformed
 
     private void ReqButActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ReqButActionPerformed
-        if(this.connectedSocket == null)
-        {
+        if (this.connectedSocket == null) {
             return;
         }
+        ClientRequest clientRequest = new ClientRequest(this.numberOfRequests, this.id, 5, portId);
+        clientRequest.run();
+        this.numberOfRequests++;
     }//GEN-LAST:event_ReqButActionPerformed
 
     private void DiscButActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DiscButActionPerformed
-        if(this.connectedSocket == null)
-        {
+        if (this.connectedSocket == null) {
             return;
         }
         try {
@@ -240,7 +250,7 @@ public class Client extends javax.swing.JFrame {
         }
         CONNECTIONREADYLabel.setForeground(Color.yellow);
         CONNECTIONREADYLabel.setText("Disconnected");
-        CONNECTIONREADYLabel.setVisible(true);      
+        CONNECTIONREADYLabel.setVisible(true);
         IDLabel.setText("Waiting");
         this.connectedSocket = null;
     }//GEN-LAST:event_DiscButActionPerformed
