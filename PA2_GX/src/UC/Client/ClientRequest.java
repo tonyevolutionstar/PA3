@@ -8,23 +8,29 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JLabel;
+import javax.swing.JTextArea;
 
 public class ClientRequest extends Thread {
 
-    private int SOCKET_PORT;
-    private int clientId;
-    private int requestId;
-    private int numberOfIterations;
+    private final int SOCKET_PORT;
+    private final int clientId;
+    private final int requestId;
+    private final int numberOfIterations;
     private Socket connectedSocket;
+    HashMap<Integer, String> allPendingRequests;
+    JTextArea PENDINGTEXTAREA;
 
-    public ClientRequest(int requestId, int clientId, int numberOfIterations, int socketPort) {
+    public ClientRequest(int requestId, int clientId, int numberOfIterations, int socketPort, HashMap<Integer, String> allPendingRequests, JTextArea PENDINGTEXTAREA) {
         this.requestId = requestId;
         this.clientId = clientId;
         this.SOCKET_PORT = socketPort;
         this.numberOfIterations = numberOfIterations;
+        this.allPendingRequests = allPendingRequests;
+        this.PENDINGTEXTAREA = PENDINGTEXTAREA;
     }
 
     @Override
@@ -41,23 +47,24 @@ public class ClientRequest extends Thread {
         } catch (IOException ex) {
             Logger.getLogger(ClientRequest.class.getName()).log(Level.SEVERE, null, ex);
         }
-        InputStream inputStream = null;
-        try {
-            inputStream = connectedSocket.getInputStream();
-        } catch (IOException ex) {
-            Logger.getLogger(ClientRequest.class.getName()).log(Level.SEVERE, null, ex);
-        }
+
         DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
-        DataInputStream dataInputStream = new DataInputStream(inputStream);
 
         String str = String.valueOf(clientId) + "|" + String.valueOf(this.requestId) + "|00|01|" + String.valueOf(this.numberOfIterations) + "|0|";
-        try {        System.out.println("teste1");
+        allPendingRequests.put(requestId, str);
+
+        StringBuilder newTextArea = new StringBuilder();
+        for (Integer key : allPendingRequests.keySet()) {
+            newTextArea.append("Request ID-----> ")
+                    .append(key)
+                    .append(" = ")
+                    .append(allPendingRequests.get(key))
+                    .append("\n");
+        }
+        PENDINGTEXTAREA.setText(newTextArea.toString());
+        try {
             dataOutputStream.writeUTF(str);
-                    System.out.println("teste2");
             dataOutputStream.flush();
-                                System.out.println("teste3");
-            String recievedRequest = dataInputStream.readUTF();
-            System.out.println("teste->"+recievedRequest);
         } catch (IOException ex) {
             Logger.getLogger(ClientRequest.class.getName()).log(Level.SEVERE, null, ex);
         }

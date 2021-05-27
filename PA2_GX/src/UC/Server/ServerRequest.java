@@ -43,11 +43,13 @@ public class ServerRequest extends Thread {
         try {       
             //DO Calculations
             System.out.println("SERVER_RESQUEST_RECEBIDO->"+request+"Port->"+SOCKET_PORT);
-            
+            sleep(5000);
             dataOutputStream.writeUTF(request+"|SERVER|");
             dataOutputStream.flush();      
             System.out.println("SERVER_REQUEST_ENVIADO");
         } catch (IOException ex) {
+            Logger.getLogger(ServerRequest.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InterruptedException ex) {
             Logger.getLogger(ServerRequest.class.getName()).log(Level.SEVERE, null, ex);
         } 
 
