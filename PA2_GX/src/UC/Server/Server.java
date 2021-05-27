@@ -200,15 +200,19 @@ public class Server extends javax.swing.JFrame {
                     }
                     id = parseInt(arrOfStr[0]);
                     System.out.println("My Id is->" + id);
-                    //É preciso criar threads do server (teste o que esta em baixo) e falta um loop infinito
-                    String str2 = dataInputStream.readUTF();   
-                    dataOutputStream.writeUTF(str2+"|CHEGOU AO SERVER|");   
-                    System.out.println(str2);
                     
                 } catch (IOException e) {
                 }
+                while(true)
+                {                    
+                    //É preciso criar threads do server (teste o que esta em baixo) e falta um loop infinito
+                    System.out.println("PRESO1"+connectedSocket);
+                    String requestInfo = dataInputStream.readUTF(); 
+                    System.out.println("SERVER->"+requestInfo);
+                    ServerRequest serverRequest = new ServerRequest(requestInfo,portId);
+                    serverRequest.start();                    
+                }
 
-                return true;
             }
 
             protected void process(Integer chunks) {

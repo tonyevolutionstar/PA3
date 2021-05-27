@@ -36,25 +36,18 @@ public class LoadBalancerRequest extends Thread {
         } catch (IOException ex) {
             Logger.getLogger(LoadBalancerRequest.class.getName()).log(Level.SEVERE, null, ex);
         }
-        InputStream inputStream = null;
-        try {
-            inputStream = SOCKET_PORT.getInputStream();
-        } catch (IOException ex) {
-            Logger.getLogger(LoadBalancerRequest.class.getName()).log(Level.SEVERE, null, ex);
-        }
         DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
-        DataInputStream dataInputStream = new DataInputStream(inputStream);
 
         try {       
-            System.out.println("ENVIAR");
             dataOutputStream.writeUTF(requestStr);
             dataOutputStream.flush();
-            String recievedRequestServer = dataInputStream.readUTF();
+            System.out.println("LOAD_BALANCER_REQUEST_ENVIADO->"+requestStr+SOCKET_PORT);            
+          /*  String recievedRequestServer = dataInputStream.readUTF();
             System.out.println("teste->"+recievedRequestServer);
             OutputStream outPutStreamClient = this.CLIENT_SOCKET_PORT.getOutputStream();
             DataOutputStream dataOutPutStreamClient = new DataOutputStream(outPutStreamClient);
             dataOutPutStreamClient.writeUTF(recievedRequestServer);
-            dataOutPutStreamClient.flush();
+            dataOutPutStreamClient.flush();*/
             
             //Change variables when finishing on the loadBalancer main thread
             

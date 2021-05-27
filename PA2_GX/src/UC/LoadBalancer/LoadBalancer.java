@@ -170,8 +170,9 @@ public class LoadBalancer extends javax.swing.JFrame {
                 {
                     Socket s2 = null;
                     try {
+                        System.out.println("Preso1");
                         s2 = serverSocket.accept();
-                        serverSocketServer = s2;
+                        System.out.println("Preso2");                        
                     } catch (IOException ex) {
                         Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
                         System.exit(1);
@@ -179,14 +180,18 @@ public class LoadBalancer extends javax.swing.JFrame {
 
                     InputStream inputStream2 = null;
                     try {
+                                                System.out.println("Preso3");
                         inputStream2 = s2.getInputStream();
                     } catch (IOException ex) {
                         Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
                     }
-
+                        System.out.println("Preso4");
                     DataInputStream dataInputStream2 = new DataInputStream(inputStream2);
+                                            System.out.println("Preso5");
                     OutputStream outputStream = s2.getOutputStream();
+                                            System.out.println("Preso6");
                     DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
+                                            System.out.println("Preso7");
                     try {  
                         String str = dataInputStream2.readUTF();                         
                         if("ImAliveServer".equals(str))
@@ -194,14 +199,25 @@ public class LoadBalancer extends javax.swing.JFrame {
                             System.out.println("Sending new Server ID->"+numberOfServers);
                             dataOutputStream.writeUTF(String.valueOf(numberOfServers)+";Server");
                             dataOutputStream.flush();
+                            serverSocketServer = s2;                            
                             numberOfServers++;
                         }
-                        if("ImAliveClient".equals(str))
+                        else if("ImAliveClient".equals(str))
                         {
                             System.out.println("CLIENT TRIED TO ENTER PORT SERVER");
                             dataOutputStream.writeUTF("999;Server");
                             dataOutputStream.flush();                            
                         }
+                        else
+                        {
+                            //Escolher melhor Servidor para enviar info
+                            System.out.println("LOAD_BALANCER_RECEIVED->"+str);
+                            OutputStream outputStreamClient = serverSocketClient.getOutputStream();
+                            DataOutputStream dataOutputStreamClient = new DataOutputStream(outputStreamClient);
+                            dataOutputStreamClient.writeUTF(str);
+ 
+                        }       
+                 
 
                     } catch (IOException ex) {
                         Logger.getLogger(LoadBalancer.class.getName()).log(Level.INFO, null, ex);
@@ -250,7 +266,7 @@ public class LoadBalancer extends javax.swing.JFrame {
                 {
                     Socket s2 = null;
                     try {
-                        s2 = serverSocket.accept();
+                        s2 = serverSocket.accept(); 
                         serverSocketClient = s2;                        
                     } catch (IOException ex) {
                         Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
@@ -272,7 +288,7 @@ public class LoadBalancer extends javax.swing.JFrame {
                         if("ImAliveClient".equals(str))
                         {
                             System.out.println("Sending new Client ID->"+numberOfClients);
-                            dataOutputStream.writeUTF(String.valueOf(numberOfClients)+";Client");
+                            dataOutputStream.writeUTF(String.valueOf(numberOfClients)+";Client");                              
                             numberOfClients++;
                         }
                         else if("ImAliveServer".equals(str))
