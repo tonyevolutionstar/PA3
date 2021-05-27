@@ -42,6 +42,7 @@ public class ServerRequest extends Thread {
 
         try {       
             //DO Calculations
+            
             System.out.println("SERVER_RESQUEST_RECEBIDO->"+request+"Port->"+SOCKET_PORT);
             
             dataOutputStream.writeUTF(request+"|SERVER|");
