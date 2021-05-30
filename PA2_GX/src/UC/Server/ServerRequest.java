@@ -42,11 +42,41 @@ public class ServerRequest extends Thread {
 
         try {       
             //DO Calculations
+            String[] val = request.split("[|]",0);
+            StringBuilder r = new StringBuilder();
+             StringBuilder sb = new StringBuilder();
+
+            String select = "";
+            int niter = Integer.parseInt(val[4]);
+            System.out.println("Niter "+ niter);
+            String na = "6.02214076";
+            if(niter < 9){
+                select = na.substring(0, 2+niter);
+                sb.append(select).append(" x 10^23");
+
+            }else{
+                StringBuilder sup = new StringBuilder();
+                sup.append(na);
+                int count = 23;
+                for(int j = 8; j < niter; j ++)
+                {
+                    
+                   sup.append("0");
+                   count--;
+                }
+                sb.append(sup.toString()).append(" x 10^").append(String.valueOf(count));
+            }
+    
+            for(int i = 0; i < 5; i ++){
+                r.append(val[i]).append("|");
+            }
+            r.append(sb.toString()).append("|");
+            
             System.out.println("SERVER_RESQUEST_RECEBIDO->"+request+"Port->"+SOCKET_PORT);
-            sleep(5000);
-            dataOutputStream.writeUTF(request+"|SERVER|");
+            sleep(10000*niter); // 10s
+            dataOutputStream.writeUTF(r.toString()+"|SERVER|");
             dataOutputStream.flush();      
-            System.out.println("SERVER_REQUEST_ENVIADO");
+            System.out.println("SERVER_REQUEST_ENVIADO " + r.toString());
         } catch (IOException ex) {
             Logger.getLogger(ServerRequest.class.getName()).log(Level.SEVERE, null, ex);
         } catch (InterruptedException ex) {

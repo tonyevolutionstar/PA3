@@ -1,6 +1,5 @@
 package UC.LoadBalancer;
 
-import UC.Client.Client;
 import java.awt.Color;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
