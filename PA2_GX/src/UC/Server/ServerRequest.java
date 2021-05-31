@@ -22,12 +22,14 @@ public class ServerRequest extends Thread {
     private Socket connectedSocket;
     private int countRequests;
     HashMap<Integer, String> concurrentThreadsWorking;
+    ServerSharedRegion SSR;
 
-    public ServerRequest(String request, int socketPort, HashMap<Integer, String> concurrentThreadsWorking, int countRequests) {
+    public ServerRequest(String request, int socketPort, HashMap<Integer, String> concurrentThreadsWorking, int countRequests, ServerSharedRegion SSR) {
         this.SOCKET_PORT = socketPort;
         this.request = request;
         this.concurrentThreadsWorking = concurrentThreadsWorking;
         this.countRequests = countRequests;
+        this.SSR = SSR;
     }
 
     @Override
@@ -82,6 +84,7 @@ public class ServerRequest extends Thread {
             dataOutputStream.flush();
             System.out.println("SERVER_REQUEST_ENVIADO " + r.toString());
             concurrentThreadsWorking.remove(countRequests);
+            SSR.ifThreadIsDoneAndQueueUp();
         } catch (IOException ex) {
             Logger.getLogger(ServerRequest.class.getName()).log(Level.SEVERE, null, ex);
         } catch (InterruptedException ex) {

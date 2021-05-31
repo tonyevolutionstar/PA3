@@ -59,7 +59,6 @@ public class MonitorHeartBeat extends Thread {
                 sleep(500);
                 dataOutputStream.writeUTF("AreYouAlive?");
                 dataOutputStream.flush();
-
                 String str = dataInputStream.readUTF();
                 System.out.println(str);
 

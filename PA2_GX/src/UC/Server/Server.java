@@ -27,6 +27,7 @@ public class Server extends javax.swing.JFrame {
     HashMap<Integer, String> concurrentThreadsWorking = new HashMap<Integer, String>();
     private Socket connectedSocket;
     private Socket s = null;
+    private ServerSharedRegion SSR = new ServerSharedRegion();
 
     public Server() throws IOException {
         this.serverQueue = new ArrayList<>();
@@ -224,7 +225,7 @@ public class Server extends javax.swing.JFrame {
                     countRequests++;
                     if (concurrentThreadsWorking.size() < 3) {
                         concurrentThreadsWorking.put(countRequests, "..");
-                        ServerRequest serverRequest = new ServerRequest(requestInfo, portId, concurrentThreadsWorking, countRequests);
+                        ServerRequest serverRequest = new ServerRequest(requestInfo, portId, concurrentThreadsWorking, countRequests,SSR);
                         serverRequest.start();
                     } else if (serverQueue.size() < 2) {
                         serverQueue.add(requestInfo);
@@ -356,10 +357,10 @@ public class Server extends javax.swing.JFrame {
             protected Boolean doInBackground() throws Exception {
                 while(true)
                 {
-                    System.out.println("WTFTWF->"+concurrentThreadsWorking.size()+"---"+serverQueue.size());
+                    SSR.threadThatChecksConcurrentWorkingThreads();
                     if(concurrentThreadsWorking.size()<3 && serverQueue.size()>0)
                     {
-                        ServerRequest serverRequest = new ServerRequest(serverQueue.get(0), portId, concurrentThreadsWorking, countRequests);
+                        ServerRequest serverRequest = new ServerRequest(serverQueue.get(0), portId, concurrentThreadsWorking, countRequests, SSR);
                         concurrentThreadsWorking.put(countRequests, "...");
                         serverRequest.start();
                         serverQueue.remove(0);
@@ -372,6 +373,10 @@ public class Server extends javax.swing.JFrame {
 
             @Override
             protected void done() {
+            }
+
+            private void sleep(int i) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
             }
         };
         worker3.execute();
