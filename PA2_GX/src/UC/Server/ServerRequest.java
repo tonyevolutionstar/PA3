@@ -1,30 +1,25 @@
 package UC.Server;
 
-import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JLabel;
-import javax.swing.SwingWorker;
 
 public class ServerRequest extends Thread {
 
-    private String request;
-    private int SOCKET_PORT;
+    private final String request;
+    private final int id_server;
+    private final int SOCKET_PORT;
     private Socket connectedSocket;
-    private int countRequests;
+    private final int countRequests;
     HashMap<Integer, String> concurrentThreadsWorking;
     ServerSharedRegion SSR;
 
-    public ServerRequest(String request, int socketPort, HashMap<Integer, String> concurrentThreadsWorking, int countRequests, ServerSharedRegion SSR) {
+    public ServerRequest(int id, String request, int socketPort, HashMap<Integer, String> concurrentThreadsWorking, int countRequests, ServerSharedRegion SSR) {
+        this.id_server = id;
         this.SOCKET_PORT = socketPort;
         this.request = request;
         this.concurrentThreadsWorking = concurrentThreadsWorking;
@@ -50,12 +45,12 @@ public class ServerRequest extends Thread {
         DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
 
         try {
-            //DO Calculations
+            System.out.println("request " + request);
             String[] val = request.split("[|]", 0);
             StringBuilder r = new StringBuilder();
             StringBuilder sb = new StringBuilder();
 
-            String select = "";
+            String select;
             int niter = Integer.parseInt(val[4]);
             System.out.println("Niter " + niter);
             String na = "6.02214076";
@@ -73,21 +68,17 @@ public class ServerRequest extends Thread {
                 sb.append(sup.toString()).append(" x 10^").append(String.valueOf(count));
             }
 
-            for (int i = 0; i < 5; i++) {
-                r.append(val[i]).append("|");
-            }
-            r.append(sb.toString()).append("|");
+       
+            r.append(val[0]).append("|").append(val[1]).append("|").append(String.valueOf(id_server)).append("|02|").append(String.valueOf(niter)).append("|").append(sb.toString());
 
             System.out.println("SERVER_RESQUEST_RECEBIDO->" + request + "Port->" + SOCKET_PORT);
             sleep(1000 * niter); // 10s
-            dataOutputStream.writeUTF(r.toString() + "|SERVER|");
+            dataOutputStream.writeUTF(r.toString());
             dataOutputStream.flush();
             System.out.println("SERVER_REQUEST_ENVIADO " + r.toString());
             concurrentThreadsWorking.remove(countRequests);
             SSR.ifThreadIsDoneAndQueueUp();
-        } catch (IOException ex) {
-            Logger.getLogger(ServerRequest.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InterruptedException ex) {
+        } catch (IOException | InterruptedException ex) {
             Logger.getLogger(ServerRequest.class.getName()).log(Level.SEVERE, null, ex);
         }
 

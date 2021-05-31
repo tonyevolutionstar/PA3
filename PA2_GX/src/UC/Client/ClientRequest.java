@@ -49,15 +49,14 @@ public class ClientRequest extends Thread {
         }
 
         DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
-
-        String str = String.valueOf(clientId) + "|" + String.valueOf(this.requestId) + "|00|01|" + String.valueOf(this.numberOfIterations) + "|0|";
+        String str =  String.valueOf(clientId) + "|" + String.valueOf(this.requestId) + "|00|01|" + String.valueOf(this.numberOfIterations) + "|0|";
+        System.out.println("str " + str);
         allPendingRequests.put(requestId, str);
 
         StringBuilder newTextArea = new StringBuilder();
+        System.out.println("all " + allPendingRequests.get(0));
         for (Integer key : allPendingRequests.keySet()) {
-            newTextArea.append("Request ID-----> ")
-                    .append(key)
-                    .append(" = ")
+            newTextArea
                     .append(allPendingRequests.get(key))
                     .append("\n");
         }

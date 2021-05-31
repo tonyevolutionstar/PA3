@@ -88,11 +88,6 @@ public class LoadBalancer extends javax.swing.JFrame {
         jLabel3.setText("Server Port:");
 
         SERVERPORTTextField.setText("8888");
-        SERVERPORTTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                SERVERPORTTextFieldActionPerformed(evt);
-            }
-        });
 
         SERVERSTEXTAREA.setColumns(20);
         SERVERSTEXTAREA.setRows(5);
@@ -116,11 +111,6 @@ public class LoadBalancer extends javax.swing.JFrame {
         jLabel7.setText("Monitor Port:");
 
         MONITORPORTTextField.setText("6666");
-        MONITORPORTTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                MONITORPORTTextFieldActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -302,11 +292,9 @@ public class LoadBalancer extends javax.swing.JFrame {
                             //Escolher melhor Servidor para enviar info
                             System.out.println("LOAD_BALANCER_RECEIVED->"+str);
                             String[] arrOfStr = str.split("|",-2);
-                            System.out.println(arrOfStr[0]);
                             System.out.println(allClientsSocketsConnected.get(parseInt(arrOfStr[0])).toString());
                             OutputStream outputStreamClient = allClientsSocketsConnected.get(parseInt(arrOfStr[0])).getOutputStream();
                             DataOutputStream dataOutputStreamClient = new DataOutputStream(outputStreamClient);
-                            System.out.println(str+"?");
                             dataOutputStreamClient.writeUTF(str);
  
                         }       
@@ -528,14 +516,6 @@ public class LoadBalancer extends javax.swing.JFrame {
         };
         workerServer3.execute();
     }//GEN-LAST:event_jButton1ActionPerformed
-
-    private void SERVERPORTTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SERVERPORTTextFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_SERVERPORTTextFieldActionPerformed
-
-    private void MONITORPORTTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_MONITORPORTTextFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_MONITORPORTTextFieldActionPerformed
 
     /**
      * @param args the command line arguments

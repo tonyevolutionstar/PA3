@@ -1,16 +1,13 @@
 package UC.Client;
 
 import java.awt.Color;
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import static java.lang.Integer.parseInt;
 import java.net.Socket;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -90,7 +87,7 @@ public class Client extends javax.swing.JFrame {
 
         CONNECTIONREADYLabel.setFont(new java.awt.Font("Arial Black", 0, 11)); // NOI18N
         CONNECTIONREADYLabel.setForeground(new java.awt.Color(0, 100, 0));
-        CONNECTIONREADYLabel.setText("Ready to Send Requests!");
+        CONNECTIONREADYLabel.setText("ONLINE!");
 
         ReqBut.setText("Request");
         ReqBut.addActionListener(new java.awt.event.ActionListener() {
@@ -223,7 +220,7 @@ public class Client extends javax.swing.JFrame {
             @Override
             protected Boolean doInBackground() throws Exception {
                 portId = parseInt(PORTTextField.getText());
-                Socket s = null;
+                Socket s;
                 try {
                     s = new Socket("localhost", portId);
                 } catch (IOException ex) {
@@ -236,7 +233,7 @@ public class Client extends javax.swing.JFrame {
                     return false;
                 }
                 CONNECTIONREADYLabel.setForeground(new java.awt.Color(0, 100, 0));
-                CONNECTIONREADYLabel.setText("Ready to Send Requests!");
+                CONNECTIONREADYLabel.setText("ONLINE!");
                 CONNECTIONREADYLabel.setVisible(true);
                 connectedSocket = s;
                 allPendingRequests = new HashMap<>();
@@ -298,7 +295,7 @@ public class Client extends javax.swing.JFrame {
                     {
                         StringBuilder newTextArea = new StringBuilder();
                         for (Integer key : allPendingRequests.keySet()) {
-                            newTextArea.append("Request ID-----> ")
+                            newTextArea
                                     .append(key)
                                     .append(" = ")
                                     .append(allPendingRequests.get(key))
@@ -312,9 +309,7 @@ public class Client extends javax.swing.JFrame {
                     }
                     StringBuilder newTextArea2 = new StringBuilder();
                     for (Integer key : allExecutedRequests.keySet()) {
-                        newTextArea2.append("Request ID-----> ")
-                                .append(key)
-                                .append(" = ")
+                        newTextArea2
                                 .append(allExecutedRequests.get(key))
                                 .append("\n");
                     }

@@ -29,8 +29,11 @@ public class ServerSharedRegion {
     public void threadThatChecksConcurrentWorkingThreads() throws InterruptedException
     {
         rl.lock();
-        cEmpty.await();
-        rl.unlock();
+        try {
+            cEmpty.await();
+        } finally {
+            rl.unlock();
+        }
     }
     
 }
