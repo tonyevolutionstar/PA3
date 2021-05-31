@@ -5,6 +5,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import static java.lang.Integer.parseInt;
 import java.net.ServerSocket;
@@ -270,7 +271,8 @@ public class LoadBalancer extends javax.swing.JFrame {
                     OutputStream outputStream = s2.getOutputStream();
                     DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
                     try {  
-                        String str = dataInputStream2.readUTF();                         
+                        String str = dataInputStream2.readUTF(); 
+                        System.out.println("TESTES->"+str);
                         if("ImAliveServer".equals(str))
                         {
                             System.out.println("Sending new Server ID->"+numberOfServers);
@@ -300,6 +302,7 @@ public class LoadBalancer extends javax.swing.JFrame {
                             //Escolher melhor Servidor para enviar info
                             System.out.println("LOAD_BALANCER_RECEIVED->"+str);
                             String[] arrOfStr = str.split("|",-2);
+                            System.out.println(arrOfStr[0]);
                             System.out.println(allClientsSocketsConnected.get(parseInt(arrOfStr[0])).toString());
                             OutputStream outputStreamClient = allClientsSocketsConnected.get(parseInt(arrOfStr[0])).getOutputStream();
                             DataOutputStream dataOutputStreamClient = new DataOutputStream(outputStreamClient);
@@ -472,10 +475,11 @@ public class LoadBalancer extends javax.swing.JFrame {
                     OutputStream outputStream = s2.getOutputStream();
                     DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
                     try {  
-                        String str = dataInputStream2.readUTF();               
+                        String str = dataInputStream2.readUTF();   
                         if("ImAliveMonitor".equals(str))
                         {
                             System.out.println("Sending new Monitor ID->"+999);
+                            System.out.println(s2);
                             dataOutputStream.writeUTF("999;Monitor");  
                         }
                         else if("ImAliveServer".equals(str) || "ImAliveClient".equals(str))
@@ -484,10 +488,22 @@ public class LoadBalancer extends javax.swing.JFrame {
                             dataOutputStream.writeUTF("999;Client");
                             dataOutputStream.flush();                            
                         }                        
-                        else
+                        else if(str.contains("Dead;"))
                         {
-                            //Info do Monitor
-                            System.out.println("else- "+str);
+
+                          //Falta por para quando o servidor morre distribuir as tarefas pelos servidores   
+                            String[] arrOfStr = str.split(";",-2);
+                            System.out.println("LB_MONITOR-> THIS SERVER DIED->"+ arrOfStr[1]);
+                            allServerSocketsConnected.remove(parseInt(arrOfStr[1]));
+                            StringBuilder newTextArea = new StringBuilder();
+                            for (Integer key : allServerSocketsConnected.keySet()) {
+                                newTextArea.append("Server ID:")
+                                   .append(key)
+                                   .append(" = ")
+                                   .append(allServerSocketsConnected.get(key))
+                                   .append("\n");
+                            }
+                            SERVERSTEXTAREA.setText(newTextArea.toString());
                         }
 
                     } catch (IOException ex) {

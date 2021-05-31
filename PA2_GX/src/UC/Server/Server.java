@@ -11,19 +11,25 @@ import java.io.OutputStream;
 import static java.lang.Integer.parseInt;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingWorker;
 
 public class Server extends javax.swing.JFrame {
 
-    private int id;
+    private int id = 9999999;
     private int portId;
+    private int monitorPortId;
+    private int countRequests;
+    private ArrayList<String> serverQueue;
+    HashMap<Integer, String> concurrentThreadsWorking = new HashMap<Integer, String>();
     private Socket connectedSocket;
     private Socket s = null;
-    private Socket mon = null;
 
     public Server() throws IOException {
+        this.serverQueue = new ArrayList<>();
         initComponents();
         STATUSLabel.setVisible(false);
     }
@@ -40,7 +46,6 @@ public class Server extends javax.swing.JFrame {
         jLabel4 = new javax.swing.JLabel();
         PORTTextField = new javax.swing.JTextField();
         STATUSLabel = new javax.swing.JLabel();
-        DiscBut = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
         monitorPort = new javax.swing.JTextField();
 
@@ -71,17 +76,10 @@ public class Server extends javax.swing.JFrame {
         STATUSLabel.setForeground(new java.awt.Color(0, 100, 0));
         STATUSLabel.setText("Ready!");
 
-        DiscBut.setText("Disconnect");
-        DiscBut.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                DiscButActionPerformed(evt);
-            }
-        });
-
         jLabel3.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         jLabel3.setText("Monitor:");
 
-        monitorPort.setText("9999");
+        monitorPort.setText("1111");
         monitorPort.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 monitorPortActionPerformed(evt);
@@ -119,9 +117,7 @@ public class Server extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 16, Short.MAX_VALUE)
                                 .addComponent(monitorPort, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(DiscBut, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(ConBut, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(ConBut, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(STATUSLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 162, Short.MAX_VALUE)))
                 .addContainerGap())
@@ -142,10 +138,9 @@ public class Server extends javax.swing.JFrame {
                     .addComponent(STATUSLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(DiscBut)
                     .addComponent(jLabel3)
                     .addComponent(monitorPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 19, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 22, Short.MAX_VALUE)
                 .addComponent(Label, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(133, 133, 133))
         );
@@ -161,19 +156,17 @@ public class Server extends javax.swing.JFrame {
         }
 
         SwingWorker worker = new SwingWorker<Boolean, Integer>() {
-
+            
             @Override
-            protected Boolean doInBackground() throws Exception {
+            public Boolean doInBackground() throws Exception {
                 portId = parseInt(PORTTextField.getText());
                 //monitor
                 try {
                     s = new Socket("localhost", portId);
-                    mon = new Socket("localhost", Integer.parseInt(monitorPort.getText()));
 
                 } catch (IOException ex) {
                     Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
                     System.out.println("No LoadBalancer Found on Port " + portId);
-                    System.out.println("No Monitor Found on Port " + Integer.parseInt(monitorPort.getText()));
 
                     STATUSLabel.setForeground(Color.red);
                     STATUSLabel.setText("Error Connecting to Ip/Port");
@@ -188,18 +181,14 @@ public class Server extends javax.swing.JFrame {
 
                 // get the output stream from the socket.
                 OutputStream outputStream = null;
-                OutputStream monOut = null;
                 try {
                     outputStream = s.getOutputStream();
-                    monOut = mon.getOutputStream();
                 } catch (IOException ex) {
                     Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 InputStream inputStream = null;
-                InputStream monInput = null;
                 try {
                     inputStream = s.getInputStream();
-                    monInput = mon.getInputStream();
                 } catch (IOException ex) {
                     Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -208,23 +197,12 @@ public class Server extends javax.swing.JFrame {
                 DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
                 DataInputStream dataInputStream = new DataInputStream(inputStream);
 
-                //Monitor
-                DataOutputStream monDataOut = new DataOutputStream(monOut);
-                DataInputStream monDataIn = new DataInputStream(monInput);
-
                 String request = "ImAliveServer";
                 System.out.println("Sending ImAliveServer to LoadBalancer");
-                   
+
                 try {
                     dataOutputStream.writeUTF(request);
                     dataOutputStream.flush();
-
-                    //monitor
-                    monDataOut.writeUTF(request);
-                    monDataOut.flush();
-
-                    String monStr = monDataIn.readUTF();
-
                     String str = dataInputStream.readUTF();
                     String[] arrOfStr = str.split(";", -2);
                     if (!arrOfStr[1].equals("Server")) {
@@ -242,11 +220,122 @@ public class Server extends javax.swing.JFrame {
                 }
                 while (true) {
                     //É preciso criar threads do server (teste o que esta em baixo) e falta um loop infinito
-                    System.out.println("PRESO1" + connectedSocket);
                     String requestInfo = dataInputStream.readUTF();
-                    System.out.println("SERVER->" + requestInfo);
-                    ServerRequest serverRequest = new ServerRequest(requestInfo, portId);
-                    serverRequest.start();
+                    countRequests++;
+                    if (concurrentThreadsWorking.size() < 3) {
+                        concurrentThreadsWorking.put(countRequests, "..");
+                        ServerRequest serverRequest = new ServerRequest(requestInfo, portId, concurrentThreadsWorking, countRequests);
+                        serverRequest.start();
+                    } else if (serverQueue.size() < 2) {
+                        serverQueue.add(requestInfo);
+                    } else {
+                        //Rejected
+                        String[] val = requestInfo.split("[|]", 0);
+                        System.out.println(val.length);
+                        String rejectedRequest = val[0] + "|" + val[1] + "|" + String.valueOf(0) + id + "|" + String.valueOf(0) + String.valueOf(3) + "|" + val[4] + "|" + val[5] + "|";
+                        Socket s2 = null;
+                        try {
+                            // get the output stream from the socket.
+                            s2 = new Socket("localhost", portId);
+                        } catch (IOException ex) {
+                            Logger.getLogger(ServerRequest.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        OutputStream outputStream3 = null;
+                        try {
+                            outputStream3 = s2.getOutputStream();
+                        } catch (IOException ex) {
+                            Logger.getLogger(ServerRequest.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+
+                        DataOutputStream dataOutputStream3 = new DataOutputStream(outputStream3);
+                        dataOutputStream3.writeUTF(rejectedRequest);
+                                    dataOutputStream3.flush(); 
+                    }
+                }
+
+            }
+            
+
+            protected void process(Integer chunks) {
+            }
+
+            @Override
+            protected void done() {
+            }
+        };
+        worker.execute();
+
+        //Monitor Thread
+        SwingWorker worker2 = new SwingWorker<Boolean, Integer>() {
+
+            @Override
+            protected Boolean doInBackground() throws Exception {
+                monitorPortId = parseInt(monitorPort.getText());
+                //monitor
+                Socket s2;
+                try {
+                    s2 = new Socket("localhost", monitorPortId);
+
+                } catch (IOException ex) {
+                    Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+                    System.out.println("No Monitor Found on Port " + Integer.parseInt(monitorPort.getText()));
+
+                    STATUSLabel.setForeground(Color.red);
+                    STATUSLabel.setText("Error Connecting to Ip/Port");
+                    STATUSLabel.setVisible(true);
+                    connectedSocket = null;
+                    return false;
+                }
+                STATUSLabel.setForeground(new java.awt.Color(0, 100, 0));
+                STATUSLabel.setText("Ready to Send Requests!");
+                STATUSLabel.setVisible(true);
+
+                // get the output stream from the socket.
+                OutputStream outputStream = null;
+                try {
+                    outputStream = s2.getOutputStream();
+                } catch (IOException ex) {
+                    Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                InputStream inputStream = null;
+                try {
+                    inputStream = s2.getInputStream();
+                } catch (IOException ex) {
+                    Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+                // create a data output stream from the output stream so we can send data through it
+                DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
+                DataInputStream dataInputStream = new DataInputStream(inputStream);
+
+                String request = "ImAliveMonitor";
+
+                try {
+                    while (true) {
+                        if (id != 9999999) {
+                            //make sure there is an ip on this server, otherwise just wait
+                            break;
+                        }
+                    }
+                    dataOutputStream.writeUTF(request + ";" + String.valueOf(id));
+                    dataOutputStream.flush();
+                    String str = dataInputStream.readUTF();
+                    System.out.println(str + monitorPortId);
+                    if (!"MonitorAc".equals(str)) {
+                        System.out.println("MISTAKE-CLIENT-SERVER PORT");
+                        STATUSLabel.setForeground(Color.red);
+                        STATUSLabel.setText("Error/Dont pick Client Port");
+                        STATUSLabel.setVisible(true);
+                        connectedSocket = null;
+                        return false;
+                    }
+
+                } catch (IOException e) {
+                }
+                while (true) {
+                    //Sending Response to hearbeat
+                    String requestInfo = dataInputStream.readUTF();
+                    dataOutputStream.writeUTF(request);
                 }
 
             }
@@ -258,12 +347,35 @@ public class Server extends javax.swing.JFrame {
             protected void done() {
             }
         };
-        worker.execute();
+        worker2.execute();
+        
+            //Queue
+            SwingWorker worker3 = new SwingWorker<Boolean, Integer>() {
+
+            @Override
+            protected Boolean doInBackground() throws Exception {
+                while(true)
+                {
+                    System.out.println("WTFTWF->"+concurrentThreadsWorking.size()+"---"+serverQueue.size());
+                    if(concurrentThreadsWorking.size()<3 && serverQueue.size()>0)
+                    {
+                        ServerRequest serverRequest = new ServerRequest(serverQueue.get(0), portId, concurrentThreadsWorking, countRequests);
+                        concurrentThreadsWorking.put(countRequests, "...");
+                        serverRequest.start();
+                        serverQueue.remove(0);
+                    }
+                }
+            }
+
+            protected void process(Integer chunks) {
+            }
+
+            @Override
+            protected void done() {
+            }
+        };
+        worker3.execute();
     }//GEN-LAST:event_ConButActionPerformed
-
-    private void DiscButActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DiscButActionPerformed
-
-    }//GEN-LAST:event_DiscButActionPerformed
 
     private void monitorPortActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_monitorPortActionPerformed
         // TODO add your handling code here:
@@ -313,7 +425,6 @@ public class Server extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton ConBut;
-    private javax.swing.JButton DiscBut;
     private javax.swing.JLabel IDLabel;
     private javax.swing.JLabel Label;
     private javax.swing.JTextField PORTTextField;
