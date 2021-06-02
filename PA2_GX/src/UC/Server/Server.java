@@ -1,17 +1,24 @@
 package UC.Server;
 
+import UC.Monitor.*;
+import UC.LoadBalancer.LoadBalancer;
 import java.awt.Color;
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import static java.lang.Integer.parseInt;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import javax.swing.SwingWorker;
 
 public class Server extends javax.swing.JFrame {
@@ -24,7 +31,10 @@ public class Server extends javax.swing.JFrame {
     HashMap<Integer, String> concurrentThreadsWorking = new HashMap<>();
     private Socket connectedSocket;
     private Socket s = null;
-    private final ServerSharedRegion SSR = new ServerSharedRegion();
+    private ServerSharedRegion SSR = new ServerSharedRegion();
+    private OutputStream outPutStreamLB;
+    private ArrayList<String> allProcessedRequests = new ArrayList<>();
+    private ArrayList<String> allRequests = new ArrayList<>();
 
     public Server() throws IOException {
         this.serverQueue = new ArrayList<>();
@@ -36,45 +46,68 @@ public class Server extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        ConBut = new javax.swing.JButton();
+        startButton = new javax.swing.JButton();
+        Label = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        IDLabel = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
         PORTTextField = new javax.swing.JTextField();
         STATUSLabel = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        ALLREQTEXTAREA = new javax.swing.JTextArea();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        ALLEXECUTEDTEXTAREA = new javax.swing.JTextArea();
         monitorPort = new javax.swing.JTextField();
+        jLabel5 = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        IDLabel = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
+        jLabel8 = new javax.swing.JLabel();
+        QUEUESIZELABEL = new javax.swing.JLabel();
+        THWORKINGLABEL = new javax.swing.JLabel();
+        TOTALREQUESTSRECE = new javax.swing.JLabel();
+        TOTALREQUESTPRO = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        ConBut.setText("Connect");
-        ConBut.addActionListener(new java.awt.event.ActionListener() {
+        startButton.setText("Connect");
+        startButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                ConButActionPerformed(evt);
+                startButtonActionPerformed(evt);
             }
         });
 
         jLabel1.setFont(new java.awt.Font("Arial Black", 0, 18)); // NOI18N
-        jLabel1.setText("Server");
-
-        jLabel2.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        jLabel2.setText("Server Id:");
-
-        IDLabel.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        IDLabel.setText("Waiting");
-
-        jLabel4.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        jLabel4.setText("Ip/Port:");
+        jLabel1.setText("SERVER");
 
         PORTTextField.setText("8888");
+        PORTTextField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                PORTTextFieldActionPerformed(evt);
+            }
+        });
 
-        STATUSLabel.setFont(new java.awt.Font("Arial Black", 0, 10)); // NOI18N
+        STATUSLabel.setFont(new java.awt.Font("Arial Black", 0, 14)); // NOI18N
         STATUSLabel.setForeground(new java.awt.Color(0, 100, 0));
-        STATUSLabel.setText("Ready!");
+        STATUSLabel.setText("Ready To Receive Requests");
+
+        jLabel2.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        jLabel2.setText("Ip/Port:");
 
         jLabel3.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        jLabel3.setText("Monitor:");
+        jLabel3.setText("All Requests Received:");
+
+        jLabel4.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        jLabel4.setText("All Requests Processed:");
+
+        ALLREQTEXTAREA.setColumns(20);
+        ALLREQTEXTAREA.setRows(5);
+        jScrollPane1.setViewportView(ALLREQTEXTAREA);
+
+        ALLEXECUTEDTEXTAREA.setColumns(20);
+        ALLEXECUTEDTEXTAREA.setRows(5);
+        jScrollPane2.setViewportView(ALLEXECUTEDTEXTAREA);
 
         monitorPort.setText("1111");
         monitorPort.addActionListener(new java.awt.event.ActionListener() {
@@ -83,68 +116,141 @@ public class Server extends javax.swing.JFrame {
             }
         });
 
+        jLabel5.setText("Monitor Port:");
+
+        jLabel6.setText("Server ID:");
+
+        IDLabel.setText("Waiting");
+
+        jLabel7.setText("QueueSize:");
+
+        jLabel8.setText("ThreadsWorking:");
+
+        QUEUESIZELABEL.setText("0");
+
+        THWORKINGLABEL.setText("0");
+
+        TOTALREQUESTSRECE.setText("0");
+
+        TOTALREQUESTPRO.setText("0");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(25, 25, 25)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 69, Short.MAX_VALUE)
-                        .addComponent(ConBut, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel6)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(STATUSLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel2)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(IDLabel))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel3)
-                                .addGap(15, 15, 15)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(monitorPort, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE)
-                                    .addComponent(PORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addComponent(IDLabel)
+                        .addGap(55, 55, 55)
+                        .addComponent(jLabel7)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(QUEUESIZELABEL, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jLabel8)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(THWORKINGLABEL, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap())
+                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(39, 39, 39))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel3)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(TOTALREQUESTSRECE, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(Label, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 158, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(TOTALREQUESTPRO, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel2)
+                                    .addComponent(jLabel5))
+                                .addGap(47, 47, 47)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(monitorPort)
+                                    .addComponent(PORTTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 71, Short.MAX_VALUE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(startButton, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(27, 27, 27)
+                                .addComponent(STATUSLabel)))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(24, 24, 24)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 52, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(23, 23, 23)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel6)
+                            .addComponent(IDLabel)
+                            .addComponent(jLabel7)
+                            .addComponent(jLabel8)
+                            .addComponent(QUEUESIZELABEL)
+                            .addComponent(THWORKINGLABEL))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(IDLabel))
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4)
                     .addComponent(PORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(ConBut)
+                    .addComponent(startButton)
                     .addComponent(STATUSLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(monitorPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(200, Short.MAX_VALUE))
+                    .addComponent(monitorPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel5))
+                .addGap(10, 10, 10)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(33, 33, 33)
+                        .addComponent(Label, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel4)
+                                    .addComponent(TOTALREQUESTPRO))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 147, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel3)
+                                    .addComponent(TOTALREQUESTSRECE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jScrollPane1)))
+                        .addGap(4, 4, 4))))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void ConButActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ConButActionPerformed
+    private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
 
         if (this.connectedSocket != null) {
             //To avoid spamming connect key
             return;
         }
 
+        //Thread that comunicates with the LoadBalancer
         SwingWorker worker = new SwingWorker<Boolean, Integer>() {
-            
+
             @Override
             public Boolean doInBackground() throws Exception {
                 portId = parseInt(PORTTextField.getText());
@@ -171,6 +277,7 @@ public class Server extends javax.swing.JFrame {
                 OutputStream outputStream = null;
                 try {
                     outputStream = s.getOutputStream();
+                    outPutStreamLB = outputStream;
                 } catch (IOException ex) {
                     Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -207,42 +314,38 @@ public class Server extends javax.swing.JFrame {
                 } catch (IOException e) {
                 }
                 while (true) {
-                    //É preciso criar threads do server (teste o que esta em baixo) e falta um loop infinito
                     String requestInfo = dataInputStream.readUTF();
-                    countRequests++;
+                    allRequests.add(requestInfo);
+                    updateGui();
                     if (concurrentThreadsWorking.size() < 3) {
-                        concurrentThreadsWorking.put(countRequests, "..");
-                        ServerRequest serverRequest = new ServerRequest(id,requestInfo, portId, concurrentThreadsWorking, countRequests,SSR);
+                        //Process Request
+                        countRequests++;
+                        concurrentThreadsWorking.put(countRequests, requestInfo);
+                        updateNumbersGui();
+                        ServerRequest serverRequest = new ServerRequest(requestInfo, portId, concurrentThreadsWorking, countRequests, SSR, outPutStreamLB, 0, id, ALLEXECUTEDTEXTAREA, allProcessedRequests, TOTALREQUESTPRO);
                         serverRequest.start();
                     } else if (serverQueue.size() < 2) {
+                        //Queue
                         serverQueue.add(requestInfo);
+                        updateNumbersGui();
                     } else {
                         //Rejected
-                        String[] val = requestInfo.split("[|]", 0);
-                        System.out.println(val.length);
-                        String rejectedRequest = val[0] + "|" + val[1] + "|" + String.valueOf(0) + id + "|" + String.valueOf(0) + String.valueOf(3) + "|" + val[4] + "|" + val[5] + "|";
-                        Socket s2 = null;
-                        try {
-                            // get the output stream from the socket.
-                            s2 = new Socket("localhost", portId);
-                        } catch (IOException ex) {
-                            Logger.getLogger(ServerRequest.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                        OutputStream outputStream3 = null;
-                        try {
-                            outputStream3 = s2.getOutputStream();
-                        } catch (IOException ex) {
-                            Logger.getLogger(ServerRequest.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-
-                        DataOutputStream dataOutputStream3 = new DataOutputStream(outputStream3);
-                        dataOutputStream3.writeUTF(rejectedRequest);
-                                    dataOutputStream3.flush(); 
+                        ServerRequest serverRequest = new ServerRequest(requestInfo, portId, concurrentThreadsWorking, countRequests, SSR, outPutStreamLB, 1, id, ALLEXECUTEDTEXTAREA, allProcessedRequests, TOTALREQUESTPRO);
+                        serverRequest.start();
                     }
                 }
-
             }
-            
+
+            public void updateGui() {
+                StringBuilder newTextArea = new StringBuilder();
+                for (int i = 0; i < allRequests.size(); i++) {
+                    newTextArea.append("Request-")
+                            .append(allRequests.get(i))
+                            .append("\n");
+                }
+                ALLREQTEXTAREA.setText(newTextArea.toString());
+                TOTALREQUESTSRECE.setText(String.valueOf(allRequests.size()));
+            }
 
             protected void process(Integer chunks) {
             }
@@ -253,12 +356,12 @@ public class Server extends javax.swing.JFrame {
         };
         worker.execute();
 
-        //Monitor Thread
+        //Monitor Thread to comunicate with the Monitor
         SwingWorker worker2 = new SwingWorker<Boolean, Integer>() {
 
             @Override
             protected Boolean doInBackground() throws Exception {
-                monitorPortId = parseInt(monitorPort.getText());
+                monitorPortId = 1111;
                 //monitor
                 Socket s2;
                 try {
@@ -292,7 +395,6 @@ public class Server extends javax.swing.JFrame {
                     Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
-                // create a data output stream from the output stream so we can send data through it
                 DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
                 DataInputStream dataInputStream = new DataInputStream(inputStream);
 
@@ -323,7 +425,14 @@ public class Server extends javax.swing.JFrame {
                 while (true) {
                     //Sending Response to hearbeat
                     String requestInfo = dataInputStream.readUTF();
-                    dataOutputStream.writeUTF(request);
+                    StringBuilder sendInfoToMonitor = new StringBuilder();
+                    for (Integer key : concurrentThreadsWorking.keySet()) {
+                        sendInfoToMonitor
+                                .append(concurrentThreadsWorking.get(key))
+                                .append(",");
+                    }
+                    System.out.println(sendInfoToMonitor);
+                    dataOutputStream.writeUTF(String.valueOf(concurrentThreadsWorking.size() + serverQueue.size()) + ";" +sendInfoToMonitor);
                 }
 
             }
@@ -336,21 +445,22 @@ public class Server extends javax.swing.JFrame {
             }
         };
         worker2.execute();
-        
-            //Queue
-            SwingWorker worker3 = new SwingWorker<Boolean, Integer>() {
+
+        //Thread to see when a thread finishes the work
+        SwingWorker worker3 = new SwingWorker<Boolean, Integer>() {
 
             @Override
             protected Boolean doInBackground() throws Exception {
-                while(true)
-                {
+                while (true) {
                     SSR.threadThatChecksConcurrentWorkingThreads();
-                    if(concurrentThreadsWorking.size()<3 && serverQueue.size()>0)
-                    {
-                        ServerRequest serverRequest = new ServerRequest(id,serverQueue.get(0), portId, concurrentThreadsWorking, countRequests, SSR);
-                        concurrentThreadsWorking.put(countRequests, "...");
+                    updateNumbersGui();
+                    if (concurrentThreadsWorking.size() < 3 && serverQueue.size() > 0) {
+                        countRequests++;
+                        ServerRequest serverRequest = new ServerRequest(serverQueue.get(0), portId, concurrentThreadsWorking, countRequests, SSR, outPutStreamLB, 0, id, ALLEXECUTEDTEXTAREA, allProcessedRequests, TOTALREQUESTPRO);
                         serverRequest.start();
+                        concurrentThreadsWorking.put(countRequests, serverQueue.get(0));
                         serverQueue.remove(0);
+                        updateNumbersGui();
                     }
                 }
             }
@@ -362,15 +472,21 @@ public class Server extends javax.swing.JFrame {
             protected void done() {
             }
 
-            private void sleep(int i) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
         };
         worker3.execute();
-    }//GEN-LAST:event_ConButActionPerformed
+    }//GEN-LAST:event_startButtonActionPerformed
+
+    public void updateNumbersGui() {
+        QUEUESIZELABEL.setText(String.valueOf(serverQueue.size()));
+        THWORKINGLABEL.setText(String.valueOf(concurrentThreadsWorking.size()));
+    }
+
+    private void PORTTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_PORTTextFieldActionPerformed
+
+    }//GEN-LAST:event_PORTTextFieldActionPerformed
 
     private void monitorPortActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_monitorPortActionPerformed
-        // TODO add your handling code here:
+
     }//GEN-LAST:event_monitorPortActionPerformed
 
     /**
@@ -400,10 +516,15 @@ public class Server extends javax.swing.JFrame {
         }
         //</editor-fold>
         //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
-            @Override
             public void run() {
                 try {
                     new Server().setVisible(true);
@@ -416,14 +537,27 @@ public class Server extends javax.swing.JFrame {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton ConBut;
+    private javax.swing.JTextArea ALLEXECUTEDTEXTAREA;
+    private javax.swing.JTextArea ALLREQTEXTAREA;
     private javax.swing.JLabel IDLabel;
+    private javax.swing.JLabel Label;
     private javax.swing.JTextField PORTTextField;
+    private javax.swing.JLabel QUEUESIZELABEL;
     private javax.swing.JLabel STATUSLabel;
+    private javax.swing.JLabel THWORKINGLABEL;
+    private javax.swing.JLabel TOTALREQUESTPRO;
+    private javax.swing.JLabel TOTALREQUESTSRECE;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTextField monitorPort;
+    private javax.swing.JButton startButton;
     // End of variables declaration//GEN-END:variables
 }

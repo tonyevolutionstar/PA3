@@ -10,29 +10,34 @@ import java.io.OutputStream;
 import static java.lang.Integer.parseInt;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingWorker;
 
-
 public class LoadBalancer extends javax.swing.JFrame {
-    
-              
+
     private int numberOfClients = 0;
     private int numberOfServers = 0;
     private int serverPort;
     private int serverPortServer;
     private int serverPortMonitor;
-    private Socket serverSocketServer;
     private Socket serverSocketClient;
     private Socket serverSocketMonitor;
     HashMap<Integer, Socket> allServerSocketsConnected = new HashMap<Integer, Socket>();
-    HashMap<Integer, Socket> allClientsSocketsConnected = new HashMap<Integer, Socket>();  
-    
+    //HashTable so main LB thread can access all the threads that are waiting for requests of each server
+    HashMap<Integer, LoadBalancerRequestReceiver> allServerReceiverThreads = new HashMap<Integer, LoadBalancerRequestReceiver>();
+    HashMap<Integer, Socket> allClientsSocketsConnected = new HashMap<Integer, Socket>();
+
+    //HashTable that contains all the requests on each server!
+    HashMap<Integer, ArrayList> allRequestsOnEachServer = new HashMap<Integer, ArrayList>();
+
     public LoadBalancer() throws IOException {
         initComponents();
-        STATUSLabel.setVisible(false);   
+        STATUSLabel.setVisible(false);
     }
 
     /**
@@ -203,316 +208,318 @@ public class LoadBalancer extends javax.swing.JFrame {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
 
-          if(serverSocketClient != null)
-          {
-              return;
-          }
-          
-         try {
-            serverPort = parseInt(PORTTextField.getText());   
+        if (serverSocketClient != null) {
+            return;
+        }
+
+        try {
+            serverPort = parseInt(PORTTextField.getText());
             serverPortServer = parseInt(SERVERPORTTextField.getText());
             serverPortMonitor = parseInt(MONITORPORTTextField.getText());
-          } catch (NumberFormatException ex) {
+        } catch (NumberFormatException ex) {
             Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
             STATUSLabel.setForeground(Color.red);
             STATUSLabel.setText("Error Creating Server :/");
-            STATUSLabel.setVisible(true); 
+            STATUSLabel.setVisible(true);
             return;
-          }
-        
-          SwingWorker worker = new SwingWorker<Boolean, Integer>() {
+        }
 
-          @Override
-          protected Boolean doInBackground() throws Exception {
-              {      
-                ServerSocket serverSocket = null;
-                try {
-                    serverSocket = new ServerSocket(serverPortServer);  
-                } catch (IOException ex) {
-                    Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
-                    STATUSLabel.setForeground(Color.red);
-                    STATUSLabel.setText("Error Creating Server :/");
-                    STATUSLabel.setVisible(true); 
-                    return false;
-                }
-                
-                STATUSLabel.setForeground(new java.awt.Color(0, 100, 0));
-                STATUSLabel.setText("ONLINE!");
-                STATUSLabel.setVisible(true);                
-                
-                
-                while(true)
+        SwingWorker worker = new SwingWorker<Boolean, Integer>() {
+
+            @Override
+            protected Boolean doInBackground() throws Exception {
                 {
-                    Socket s2 = null;
+                    ServerSocket serverSocket = null;
                     try {
-                        s2 = serverSocket.accept();                       
+                        serverSocket = new ServerSocket(serverPortServer);
                     } catch (IOException ex) {
                         Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
-                        System.exit(1);
+                        STATUSLabel.setForeground(Color.red);
+                        STATUSLabel.setText("Error Creating Server :/");
+                        STATUSLabel.setVisible(true);
+                        return false;
                     }
 
-                    InputStream inputStream2 = null;
-                    try {
-                        inputStream2 = s2.getInputStream();
-                    } catch (IOException ex) {
-                        Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    DataInputStream dataInputStream2 = new DataInputStream(inputStream2);
-                    OutputStream outputStream = s2.getOutputStream();
-                    DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
-                    try {  
-                        String str = dataInputStream2.readUTF(); 
-                        System.out.println("TESTES->"+str);
-                        if("ImAliveServer".equals(str))
-                        {
-                            System.out.println("Sending new Server ID->"+numberOfServers);
-                            dataOutputStream.writeUTF(String.valueOf(numberOfServers)+";Server");
-                            dataOutputStream.flush();
-                            serverSocketServer = s2;  
-                            allServerSocketsConnected.put(numberOfServers,s2);
-                            StringBuilder newTextArea = new StringBuilder();
-                            for (Integer key : allServerSocketsConnected.keySet()) {
-                                newTextArea.append("Server ID:")
-                                   .append(key)
-                                   .append(" = ")
-                                   .append(allServerSocketsConnected.get(key))
-                                   .append("\n");
-                            }
-                            SERVERSTEXTAREA.setText(newTextArea.toString());
-                            numberOfServers++;
-                        }
-                        else if("ImAliveClient".equals(str) || "ImAliveMonitor".equals(str))
-                        {
-                            System.out.println("CLIENT TRIED TO ENTER PORT SERVER");
-                            dataOutputStream.writeUTF("999;Server");
-                            dataOutputStream.flush();                            
-                        }
-                        else
-                        {
-                            //Escolher melhor Servidor para enviar info
-                            System.out.println("LOAD_BALANCER_RECEIVED->"+str);
-                            String[] arrOfStr = str.split("|",-2);
-                            System.out.println(allClientsSocketsConnected.get(parseInt(arrOfStr[0])).toString());
-                            OutputStream outputStreamClient = allClientsSocketsConnected.get(parseInt(arrOfStr[0])).getOutputStream();
-                            DataOutputStream dataOutputStreamClient = new DataOutputStream(outputStreamClient);
-                            dataOutputStreamClient.writeUTF(str);
- 
-                        }       
-                 
+                    STATUSLabel.setForeground(new java.awt.Color(0, 100, 0));
+                    STATUSLabel.setText("ONLINE!");
+                    STATUSLabel.setVisible(true);
 
-                    } catch (IOException ex) {
-                        Logger.getLogger(LoadBalancer.class.getName()).log(Level.INFO, null, ex);
+                    while (true) {
+                        Socket s2 = null;
                         try {
-                            s2.close();
-                        } catch (IOException ex1) {
-                            Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex1);
+                            s2 = serverSocket.accept();
+                        } catch (IOException ex) {
+                            Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
+                            System.exit(1);
+                        }
+
+
+                        InputStream inputStream2 = null;
+                        try {
+                            inputStream2 = s2.getInputStream();
+                        } catch (IOException ex) {
+                            Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        DataInputStream dataInputStream2 = new DataInputStream(inputStream2);
+                        OutputStream outputStream = s2.getOutputStream();
+                        DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
+                        try {
+                            String str = dataInputStream2.readUTF();
+                            System.out.println("TESTES->" + str);
+                            if ("ImAliveServer".equals(str)) {
+                                System.out.println("Sending new Server ID->" + numberOfServers);
+                                dataOutputStream.writeUTF(String.valueOf(numberOfServers) + ";Server");
+                                dataOutputStream.flush();
+                                allServerSocketsConnected.put(numberOfServers, s2);
+                                allRequestsOnEachServer.put(numberOfServers, new ArrayList<String>());
+                                LoadBalancerRequestReceiver receiveRequests = new LoadBalancerRequestReceiver(allClientsSocketsConnected, s2, allRequestsOnEachServer);
+                                receiveRequests.start();
+                                StringBuilder newTextArea = new StringBuilder();
+                                for (Integer key : allServerSocketsConnected.keySet()) {
+                                    newTextArea.append("Server ID:")
+                                            .append(key)
+                                            .append(" = ")
+                                            .append(allServerSocketsConnected.get(key))
+                                            .append("\n");
+                                }
+                                SERVERSTEXTAREA.setText(newTextArea.toString());
+                                numberOfServers++;
+                            } else if ("ImAliveClient".equals(str) || "ImAliveMonitor".equals(str)) {
+                                System.out.println("CLIENT TRIED TO ENTER PORT SERVER");
+                                dataOutputStream.writeUTF("999;Server");
+                                dataOutputStream.flush();
+                            } else {
+                                System.out.println("YOU Are NOT SUPPOSED TO ENTER THIS ELSE!");
+                            }
+
+                        } catch (IOException ex) {
+                            Logger.getLogger(LoadBalancer.class.getName()).log(Level.INFO, null, ex);
+                            try {
+                                s2.close();
+                            } catch (IOException ex1) {
+                                Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex1);
+                            }
                         }
                     }
-                }  
+                }
             }
-          }
 
-          protected void process(Integer chunks) {
-          }
+            protected void process(Integer chunks) {
+            }
 
-          @Override
-          protected void done() {
-            System.out.println("Done");
-          }
+            @Override
+            protected void done() {
+                System.out.println("Done");
+            }
         };
         worker.execute();
-        
+
+        //CLIENT
         SwingWorker workerServer = new SwingWorker<Boolean, Integer>() {
 
-          @Override
-          protected Boolean doInBackground() throws Exception {
-              {      
-                ServerSocket serverSocket = null;
-                try {
-                    serverSocket = new ServerSocket(serverPort);       
-                } catch (IOException ex) {
-                    Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
-                    STATUSLabel.setForeground(Color.red);
-                    STATUSLabel.setText("Error Creating Server :/");
-                    STATUSLabel.setVisible(true); 
-                    return false;
-                }
-                
-                STATUSLabel.setForeground(new java.awt.Color(0, 100, 0));
-                STATUSLabel.setText("ONLINE!");
-                STATUSLabel.setVisible(true);                
-                
-                
-                while(true)
+            @Override
+            protected Boolean doInBackground() throws Exception {
                 {
-                    Socket s2 = null;
+                    ServerSocket serverSocket = null;
                     try {
-                        s2 = serverSocket.accept(); 
-                        serverSocketClient = s2;                        
+                        serverSocket = new ServerSocket(serverPort);
                     } catch (IOException ex) {
                         Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
-                        System.exit(1);
+                        STATUSLabel.setForeground(Color.red);
+                        STATUSLabel.setText("Error Creating Server :/");
+                        STATUSLabel.setVisible(true);
+                        return false;
                     }
 
-                    InputStream inputStream2 = null;
-                    try {
-                        inputStream2 = s2.getInputStream();
-                    } catch (IOException ex) {
-                        Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                    STATUSLabel.setForeground(new java.awt.Color(0, 100, 0));
+                    STATUSLabel.setText("ONLINE!");
+                    STATUSLabel.setVisible(true);
 
-                    DataInputStream dataInputStream2 = new DataInputStream(inputStream2);
-                    OutputStream outputStream = s2.getOutputStream();
-                    DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
-                    try {  
-                        String str = dataInputStream2.readUTF();               
-                        if("ImAliveClient".equals(str))
-                        {
-                            System.out.println("Sending new Client ID->"+numberOfClients);
-                            dataOutputStream.writeUTF(String.valueOf(numberOfClients)+";Client");  
-                            allClientsSocketsConnected.put(numberOfClients,s2); 
-                            StringBuilder newTextArea = new StringBuilder();
-                            for (Integer key : allClientsSocketsConnected.keySet()) {
-                                newTextArea.append("Client ID:")
-                                   .append(key)
-                                   .append(" = ")
-                                   .append(allClientsSocketsConnected.get(key))
-                                   .append("\n");
-                            }
-                            CLIENTSTEXTAREA.setText(newTextArea.toString());
-                            numberOfClients++;
-                        }
-                        else if("ImAliveServer".equals(str) || "ImAliveMonitor".equals(str))
-                        {
-                            System.out.println("SERVER TRIED TO ENTER CLIENT");
-                            dataOutputStream.writeUTF("999;Client");
-                            dataOutputStream.flush();                            
-                        }                        
-                        else
-                        {
-                            //Escolher melhor Servidor para enviar info
-                            System.out.println("else- "+str);
-                            LoadBalancerRequest loadBalancerRequest = new LoadBalancerRequest(str,serverSocketServer,serverSocketClient); 
-                            loadBalancerRequest.run();
-                           
-                        }
-
-                    } catch (IOException ex) {
-                        Logger.getLogger(LoadBalancer.class.getName()).log(Level.INFO, null, ex);
+                    while (true) {
+                        Socket s2 = null;
                         try {
-                            s2.close();
-                        } catch (IOException ex1) {
-                            Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex1);
+                            s2 = serverSocket.accept();
+                            serverSocketClient = s2;
+                        } catch (IOException ex) {
+                            Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
+                            System.exit(1);
+                        }
+
+                        InputStream inputStream2 = null;
+                        try {
+                            inputStream2 = s2.getInputStream();
+                        } catch (IOException ex) {
+                            Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+
+                        DataInputStream dataInputStream2 = new DataInputStream(inputStream2);
+                        OutputStream outputStream = s2.getOutputStream();
+                        DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
+                        try {
+                            String str = dataInputStream2.readUTF();
+                            if ("ImAliveClient".equals(str)) {
+                                System.out.println("Sending new Client ID->" + numberOfClients);
+                                dataOutputStream.writeUTF(String.valueOf(numberOfClients) + ";Client");
+                                allClientsSocketsConnected.put(numberOfClients, s2);
+                                StringBuilder newTextArea = new StringBuilder();
+                                for (Integer key : allClientsSocketsConnected.keySet()) {
+                                    newTextArea.append("Client ID:")
+                                            .append(key)
+                                            .append(" = ")
+                                            .append(allClientsSocketsConnected.get(key))
+                                            .append("\n");
+                                }
+                                CLIENTSTEXTAREA.setText(newTextArea.toString());
+                                numberOfClients++;
+                            } else if ("ImAliveServer".equals(str) || "ImAliveMonitor".equals(str)) {
+                                System.out.println("SERVER TRIED TO ENTER CLIENT");
+                                dataOutputStream.writeUTF("999;Client");
+                                dataOutputStream.flush();
+                            } else {
+                                System.out.println("else- " + str);
+                                LoadBalancerRequest loadBalancerRequest = new LoadBalancerRequest(str, allServerSocketsConnected, serverSocketMonitor, allClientsSocketsConnected, allRequestsOnEachServer, 9999999);
+                                loadBalancerRequest.start();
+                            }
+
+                        } catch (IOException ex) {
+                            Logger.getLogger(LoadBalancer.class.getName()).log(Level.INFO, null, ex);
+                            try {
+                                s2.close();
+                            } catch (IOException ex1) {
+                                Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex1);
+                            }
                         }
                     }
-                }  
+                }
             }
-          }
 
-          protected void process(Integer chunks) {
-          }
+            protected void process(Integer chunks) {
+            }
 
-          @Override
-          protected void done() {
-            System.out.println("Done");
-          }
+            @Override
+            protected void done() {
+                System.out.println("Done");
+            }
         };
         workerServer.execute();
-        
-        
+
+        //MONITOR
         SwingWorker workerServer3 = new SwingWorker<Boolean, Integer>() {
 
-          @Override
-          protected Boolean doInBackground() throws Exception {
-              {      
-                ServerSocket serverSocket = null;
-                try {
-                    serverSocket = new ServerSocket(serverPortMonitor);       
-                } catch (IOException ex) {
-                    Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
-                    STATUSLabel.setForeground(Color.red);
-                    STATUSLabel.setText("Error Creating Server :/");
-                    STATUSLabel.setVisible(true); 
-                    return false;
-                }
-                
-                STATUSLabel.setForeground(new java.awt.Color(0, 100, 0));
-                STATUSLabel.setText("ONLINE!");
-                STATUSLabel.setVisible(true);                
-                
-                
-                while(true)
+            @Override
+            protected Boolean doInBackground() throws Exception {
                 {
-                    Socket s2 = null;
+                    ServerSocket serverSocket = null;
                     try {
-                        s2 = serverSocket.accept(); 
-                        serverSocketMonitor = s2;                        
+                        serverSocket = new ServerSocket(serverPortMonitor);
                     } catch (IOException ex) {
                         Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
-                        System.exit(1);
+                        STATUSLabel.setForeground(Color.red);
+                        STATUSLabel.setText("Error Creating Server :/");
+                        STATUSLabel.setVisible(true);
+                        return false;
                     }
 
-                    InputStream inputStream2 = null;
-                    try {
-                        inputStream2 = s2.getInputStream();
-                    } catch (IOException ex) {
-                        Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                    STATUSLabel.setForeground(new java.awt.Color(0, 100, 0));
+                    STATUSLabel.setText("ONLINE!");
+                    STATUSLabel.setVisible(true);
 
-                    DataInputStream dataInputStream2 = new DataInputStream(inputStream2);
-                    OutputStream outputStream = s2.getOutputStream();
-                    DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
-                    try {  
-                        String str = dataInputStream2.readUTF();   
-                        if("ImAliveMonitor".equals(str))
-                        {
-                            System.out.println("Sending new Monitor ID->"+999);
-                            System.out.println(s2);
-                            dataOutputStream.writeUTF("999;Monitor");  
-                        }
-                        else if("ImAliveServer".equals(str) || "ImAliveClient".equals(str))
-                        {
-                            System.out.println("SERVER TRIED TO ENTER CLIENT");
-                            dataOutputStream.writeUTF("999;Client");
-                            dataOutputStream.flush();                            
-                        }                        
-                        else if(str.contains("Dead;"))
-                        {
-
-                          //Falta por para quando o servidor morre distribuir as tarefas pelos servidores   
-                            String[] arrOfStr = str.split(";",-2);
-                            System.out.println("LB_MONITOR-> THIS SERVER DIED->"+ arrOfStr[1]);
-                            allServerSocketsConnected.remove(parseInt(arrOfStr[1]));
-                            StringBuilder newTextArea = new StringBuilder();
-                            for (Integer key : allServerSocketsConnected.keySet()) {
-                                newTextArea.append("Server ID:")
-                                   .append(key)
-                                   .append(" = ")
-                                   .append(allServerSocketsConnected.get(key))
-                                   .append("\n");
-                            }
-                            SERVERSTEXTAREA.setText(newTextArea.toString());
-                        }
-
-                    } catch (IOException ex) {
-                        Logger.getLogger(LoadBalancer.class.getName()).log(Level.INFO, null, ex);
+                    while (true) {
+                        Socket s2 = null;
                         try {
-                            s2.close();
-                        } catch (IOException ex1) {
-                            Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex1);
+                            s2 = serverSocket.accept();
+                            if (serverSocketMonitor == null) {
+                                serverSocketMonitor = s2;
+                            }
+                        } catch (IOException ex) {
+                            Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
+                            System.exit(1);
+                        }
+
+                        InputStream inputStream2 = null;
+                        try {
+                            inputStream2 = s2.getInputStream();
+                        } catch (IOException ex) {
+                            Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+
+                        DataInputStream dataInputStream2 = new DataInputStream(inputStream2);
+                        OutputStream outputStream = s2.getOutputStream();
+                        DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
+                        try {
+                            String str = dataInputStream2.readUTF();
+                            if ("ImAliveMonitor".equals(str)) {
+                                System.out.println("Sending new Monitor ID->" + 999);
+                                System.out.println(s2);
+                                dataOutputStream.writeUTF("999;Monitor");
+                            } else if ("ImAliveServer".equals(str) || "ImAliveClient".equals(str)) {
+                                System.out.println("SERVER TRIED TO ENTER CLIENT");
+                                dataOutputStream.writeUTF("999;Client");
+                                dataOutputStream.flush();
+                            } else if (str.contains("Dead;")) {
+
+                                //Falta por para quando o servidor morre distribuir as tarefas pelos servidores   
+                                String[] arrOfStr = str.split(";", -2);
+                                System.out.println("LB_MONITOR-> THIS SERVER DIED->" + arrOfStr[1]);
+                                allServerSocketsConnected.remove(parseInt(arrOfStr[1]));
+                                allServerReceiverThreads.remove(parseInt(arrOfStr[1]));
+                                StringBuilder newTextArea = new StringBuilder();
+                                for (Integer key : allServerSocketsConnected.keySet()) {
+                                    newTextArea.append("Server ID:")
+                                            .append(key)
+                                            .append(" = ")
+                                            .append(allServerSocketsConnected.get(key))
+                                            .append("\n");
+                                }
+                                SERVERSTEXTAREA.setText(newTextArea.toString());
+
+                                //in case the server had work
+                                ArrayList<String> temporaryRequests = new ArrayList<>();
+                                if (!allRequestsOnEachServer.get(parseInt(arrOfStr[1])).isEmpty()) {
+                                    for (int i = 0; i < allRequestsOnEachServer.get(parseInt(arrOfStr[1])).size(); i++) {
+                                        temporaryRequests.add(allRequestsOnEachServer.get(parseInt(arrOfStr[1])).get(i).toString());
+                                    }
+                                }
+                                allRequestsOnEachServer.remove(parseInt(arrOfStr[1]));
+                                
+                                //get All keys
+
+                                ArrayList<Integer> servers = new ArrayList<>();
+                                for (Integer key : allServerSocketsConnected.keySet()) {
+                                    servers.add(key);
+                                }
+                                
+                                int distribute = 0;
+                                for (int i = 0; i < temporaryRequests.size(); i++) {
+                                    if(distribute >= servers.size())
+                                    {
+                                        distribute = 0;
+                                    }
+                                    LoadBalancerRequest loadBalancerRequest = new LoadBalancerRequest(temporaryRequests.get(i), allServerSocketsConnected, serverSocketMonitor, allClientsSocketsConnected, allRequestsOnEachServer,servers.get(distribute));
+                                    loadBalancerRequest.start();
+                                    distribute++;
+                                }
+                            }
+
+                        } catch (IOException ex) {
+                            Logger.getLogger(LoadBalancer.class.getName()).log(Level.INFO, null, ex);
+                            try {
+                                s2.close();
+                            } catch (IOException ex1) {
+                                Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex1);
+                            }
                         }
                     }
-                }  
+                }
             }
-          }
 
-          protected void process(Integer chunks) {
-          }
+            protected void process(Integer chunks) {
+            }
 
-          @Override
-          protected void done() {
-            System.out.println("Done");
-          }
+            @Override
+            protected void done() {
+                System.out.println("Done");
+            }
         };
         workerServer3.execute();
     }//GEN-LAST:event_jButton1ActionPerformed

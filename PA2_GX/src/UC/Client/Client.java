@@ -289,15 +289,15 @@ public class Client extends javax.swing.JFrame {
                     System.out.println(arrOfStr[1]);
                     allPendingRequests.remove(parseInt(arrOfStr[1]));
                     System.out.println(allPendingRequests.toString());
-                    allExecutedRequests.put(allExecutedRequests.size(), requestInfo);
+                    allExecutedRequests.put(parseInt(arrOfStr[1]), requestInfo);
                     System.out.println(allExecutedRequests.size()+"--");
                     if(!allPendingRequests.isEmpty())
                     {
                         StringBuilder newTextArea = new StringBuilder();
                         for (Integer key : allPendingRequests.keySet()) {
-                            newTextArea
+                            newTextArea.append("Request-")
                                     .append(key)
-                                    .append(" = ")
+                                    .append(" : ")
                                     .append(allPendingRequests.get(key))
                                     .append("\n");
                         } 
@@ -309,7 +309,9 @@ public class Client extends javax.swing.JFrame {
                     }
                     StringBuilder newTextArea2 = new StringBuilder();
                     for (Integer key : allExecutedRequests.keySet()) {
-                        newTextArea2
+                        newTextArea2.append("Request-")
+                                .append(key)
+                                .append(" : ")
                                 .append(allExecutedRequests.get(key))
                                 .append("\n");
                     }
@@ -340,7 +342,7 @@ public class Client extends javax.swing.JFrame {
         }
         
         ClientRequest clientRequest = new ClientRequest(this.numberOfRequests, this.id, Integer.parseInt(niter.getText()), portId, allPendingRequests, PENDINGTEXTAREA);
-        clientRequest.run();
+        clientRequest.start();
         this.numberOfRequests++;
     }//GEN-LAST:event_ReqButActionPerformed
 

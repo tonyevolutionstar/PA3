@@ -4,45 +4,70 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JLabel;
+import javax.swing.JTextArea;
 
 public class ServerRequest extends Thread {
 
     private final String request;
-    private final int id_server;
     private final int SOCKET_PORT;
     private Socket connectedSocket;
     private final int countRequests;
     HashMap<Integer, String> concurrentThreadsWorking;
     ServerSharedRegion SSR;
+    OutputStream outputStream;
+    private int processRejectedFlag;
+    private int serverId;
+    private JTextArea ALLEXECUTEDTEXTAREA;
+    private JLabel TOTALREQUESTPRO;
+    private ArrayList<String> allProcessedRequests;
 
-    public ServerRequest(int id, String request, int socketPort, HashMap<Integer, String> concurrentThreadsWorking, int countRequests, ServerSharedRegion SSR) {
-        this.id_server = id;
+    public ServerRequest(String request, int socketPort, HashMap<Integer, String> concurrentThreadsWorking, int countRequests, ServerSharedRegion SSR, OutputStream outputStream, int processRejectedFlag, int serverId, JTextArea ALLEXECUTEDTEXTAREA, ArrayList<String> allProcessedRequests, JLabel TOTALREQUESTPRO) {
         this.SOCKET_PORT = socketPort;
         this.request = request;
         this.concurrentThreadsWorking = concurrentThreadsWorking;
         this.countRequests = countRequests;
         this.SSR = SSR;
+        this.outputStream = outputStream;
+        this.processRejectedFlag = processRejectedFlag;
+        this.serverId = serverId;
+        this.allProcessedRequests = allProcessedRequests;
+        this.ALLEXECUTEDTEXTAREA = ALLEXECUTEDTEXTAREA;
+        this.TOTALREQUESTPRO = TOTALREQUESTPRO;
     }
+
 
     @Override
     public void run() {
-        try {
-            // get the output stream from the socket.
-            this.connectedSocket = new Socket("localhost", SOCKET_PORT);
-        } catch (IOException ex) {
-            Logger.getLogger(ServerRequest.class.getName()).log(Level.SEVERE, null, ex);
-        }
+
         OutputStream outputStream = null;
-        try {
-            outputStream = connectedSocket.getOutputStream();
-        } catch (IOException ex) {
-            Logger.getLogger(ServerRequest.class.getName()).log(Level.SEVERE, null, ex);
-        }
+
+        outputStream = this.outputStream;
 
         DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
+
+        System.out.println("REJECTED FLAG->" + this.processRejectedFlag);
+        if (this.processRejectedFlag == 1) {
+            String[] val = request.split("[|]", 0);
+            System.out.println(val.length);
+            String rejectedRequest = val[0] + "|" + val[1] + "|" + String.valueOf(0) + serverId + "|" + String.valueOf(0) + String.valueOf(3) + "|" + val[4] + "|" + val[5] + "|";
+            try {
+                dataOutputStream.writeUTF(rejectedRequest + "|SERVER|");
+            } catch (IOException ex) {
+                Logger.getLogger(ServerRequest.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            try {
+                dataOutputStream.flush();
+            } catch (IOException ex) {
+                Logger.getLogger(ServerRequest.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            System.out.println("SERVER_REQUEST_ENVIADO_REJECTED " + rejectedRequest);
+            return;
+        }
 
         try {
             System.out.println("request " + request);
@@ -68,19 +93,37 @@ public class ServerRequest extends Thread {
                 sb.append(sup.toString()).append(" x 10^").append(String.valueOf(count));
             }
 
-       
-            r.append(val[0]).append("|").append(val[1]).append("|").append(String.valueOf(id_server)).append("|02|").append(String.valueOf(niter)).append("|").append(sb.toString());
+            for (int i = 0; i < 5; i++) {
+                if (i == 2) {
+                    r.append(serverId).append("|");
+                }
+                r.append(val[i]).append("|");
+            }
+            r.append(sb.toString()).append("|");
 
             System.out.println("SERVER_RESQUEST_RECEBIDO->" + request + "Port->" + SOCKET_PORT);
             sleep(1000 * niter); // 10s
             dataOutputStream.writeUTF(r.toString());
             dataOutputStream.flush();
             System.out.println("SERVER_REQUEST_ENVIADO " + r.toString());
+            allProcessedRequests.add(r.toString());
+            updateGui();
             concurrentThreadsWorking.remove(countRequests);
             SSR.ifThreadIsDoneAndQueueUp();
         } catch (IOException | InterruptedException ex) {
             Logger.getLogger(ServerRequest.class.getName()).log(Level.SEVERE, null, ex);
         }
 
+    }
+
+    public void updateGui() {
+        StringBuilder newTextArea = new StringBuilder();
+        for (int i = 0; i < allProcessedRequests.size(); i++) {
+            newTextArea.append("Request-")
+                    .append(allProcessedRequests.get(i))
+                    .append("\n");
+        }
+        ALLEXECUTEDTEXTAREA.setText(newTextArea.toString());
+        TOTALREQUESTPRO.setText(String.valueOf(allProcessedRequests.size()));
     }
 }

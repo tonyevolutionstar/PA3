@@ -56,7 +56,9 @@ public class ClientRequest extends Thread {
         StringBuilder newTextArea = new StringBuilder();
         System.out.println("all " + allPendingRequests.get(0));
         for (Integer key : allPendingRequests.keySet()) {
-            newTextArea
+            newTextArea.append("Request-")
+                    .append(key)
+                    .append(" : ")
                     .append(allPendingRequests.get(key))
                     .append("\n");
         }
