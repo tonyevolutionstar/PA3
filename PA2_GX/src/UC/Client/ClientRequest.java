@@ -23,8 +23,10 @@ public class ClientRequest extends Thread {
     private Socket connectedSocket;
     HashMap<Integer, String> allPendingRequests;
     JTextArea PENDINGTEXTAREA;
+    JLabel pendReq;
 
-    public ClientRequest(int requestId, int clientId, int numberOfIterations, int socketPort, HashMap<Integer, String> allPendingRequests, JTextArea PENDINGTEXTAREA) {
+    public ClientRequest(JLabel pendReq,int requestId, int clientId, int numberOfIterations, int socketPort, HashMap<Integer, String> allPendingRequests, JTextArea PENDINGTEXTAREA) {
+        this.pendReq = pendReq;
         this.requestId = requestId;
         this.clientId = clientId;
         this.SOCKET_PORT = socketPort;
@@ -52,7 +54,7 @@ public class ClientRequest extends Thread {
         String str =  String.valueOf(clientId) + "|" + String.valueOf(this.requestId) + "|00|01|" + String.valueOf(this.numberOfIterations) + "|0|";
         System.out.println("str " + str);
         allPendingRequests.put(requestId, str);
-
+        pendReq.setText(String.valueOf(allPendingRequests.size()));
         StringBuilder newTextArea = new StringBuilder();
         System.out.println("all " + allPendingRequests.get(0));
         for (Integer key : allPendingRequests.keySet()) {

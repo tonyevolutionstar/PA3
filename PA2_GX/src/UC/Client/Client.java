@@ -84,11 +84,6 @@ public class Client extends javax.swing.JFrame {
 
         PORTTextField.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         PORTTextField.setText("7777");
-        PORTTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                PORTTextFieldActionPerformed(evt);
-            }
-        });
 
         CONNECTIONREADYLabel.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
         CONNECTIONREADYLabel.setForeground(new java.awt.Color(0, 100, 0));
@@ -239,18 +234,16 @@ public class Client extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void PORTTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_PORTTextFieldActionPerformed
-
-    }//GEN-LAST:event_PORTTextFieldActionPerformed
-
     private void ReqButActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ReqButActionPerformed
         if (this.connectedSocket == null) {
             return;
         }
         
-        ClientRequest clientRequest = new ClientRequest(this.numberOfRequests, this.id, Integer.parseInt(niter.getText()), portId, allPendingRequests, PENDINGTEXTAREA);
+        ClientRequest clientRequest = new ClientRequest(pendRequests,this.numberOfRequests, this.id, Integer.parseInt(niter.getText()), portId, allPendingRequests, PENDINGTEXTAREA);
         clientRequest.start();
+
         this.numberOfRequests++;
+
     }//GEN-LAST:event_ReqButActionPerformed
 
     private void DiscButActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DiscButActionPerformed
@@ -272,6 +265,8 @@ public class Client extends javax.swing.JFrame {
         allExecutedRequests = null;
         PENDINGTEXTAREA.setText(" ");
         EXECUTEDTEXTAREA.setText(" ");
+        pendRequests.setText("0");
+        exProcess.setText("0");
         this.connectedSocket = null;
         infiniteWhile = false;
     }//GEN-LAST:event_DiscButActionPerformed
@@ -369,6 +364,7 @@ public class Client extends javax.swing.JFrame {
                             .append(allPendingRequests.get(key))
                             .append("\n");
                         }
+
                         PENDINGTEXTAREA.setText(newTextArea.toString());
                     }
                     else
@@ -376,6 +372,9 @@ public class Client extends javax.swing.JFrame {
                         PENDINGTEXTAREA.setText("");
                     }
                     StringBuilder newTextArea2 = new StringBuilder();
+                    pendRequests.setText(String.valueOf(allPendingRequests.size()));
+
+                    exProcess.setText(String.valueOf(allExecutedRequests.size()));
                     for (Integer key : allExecutedRequests.keySet()) {
                         newTextArea2.append("Request-")
                         .append(key)
@@ -430,6 +429,7 @@ public class Client extends javax.swing.JFrame {
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
             public void run() {
                 try {
                     new Client().setVisible(true);
