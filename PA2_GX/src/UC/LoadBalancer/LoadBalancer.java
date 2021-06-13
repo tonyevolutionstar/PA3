@@ -5,20 +5,25 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import static java.lang.Integer.parseInt;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingWorker;
 
+/**
+ * Responsible to handle, connections, requests, replies 
+ * Saves information about clients connected and servers 
+ * Main socket server from all process (Monitor, Client, Server)
+ * @author António Ramos and Miguel Silva
+ */
+
 public class LoadBalancer extends javax.swing.JFrame {
+    private int click = 0;
 
     private int numberOfClients = 0;
     private int numberOfServers = 0;
@@ -27,17 +32,25 @@ public class LoadBalancer extends javax.swing.JFrame {
     private int serverPortMonitor;
     private Socket serverSocketClient;
     private Socket serverSocketMonitor;
-    HashMap<Integer, Socket> allServerSocketsConnected = new HashMap<Integer, Socket>();
+    HashMap<Integer, Socket> allServerSocketsConnected = new HashMap<>();
     //HashTable so main LB thread can access all the threads that are waiting for requests of each server
-    HashMap<Integer, LoadBalancerRequestReceiver> allServerReceiverThreads = new HashMap<Integer, LoadBalancerRequestReceiver>();
-    HashMap<Integer, Socket> allClientsSocketsConnected = new HashMap<Integer, Socket>();
+    HashMap<Integer, LoadBalancerRequestReceiver> allServerReceiverThreads = new HashMap<>();
+    HashMap<Integer, Socket> allClientsSocketsConnected = new HashMap<>();
 
     //HashTable that contains all the requests on each server!
-    HashMap<Integer, ArrayList> allRequestsOnEachServer = new HashMap<Integer, ArrayList>();
+    HashMap<Integer, ArrayList> allRequestsOnEachServer = new HashMap<>();
 
+    /*
+    * Constructor of Load Balencer
+    * @throws IOException
+    */
     public LoadBalancer() throws IOException {
         initComponents();
         STATUSLabel.setVisible(false);
+        helpTXT.setVisible(false);
+        helpTXT2.setVisible(false);
+        helpTXT3.setVisible(false);
+        helpTXT4.setVisible(false);
     }
 
     /**
@@ -66,6 +79,11 @@ public class LoadBalancer extends javax.swing.JFrame {
         MONITORPORTTextField = new javax.swing.JTextField();
         nServers = new javax.swing.JLabel();
         nClients = new javax.swing.JLabel();
+        helpBtn = new javax.swing.JButton();
+        helpTXT = new javax.swing.JLabel();
+        helpTXT4 = new javax.swing.JLabel();
+        helpTXT2 = new javax.swing.JLabel();
+        helpTXT3 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -90,7 +108,7 @@ public class LoadBalancer extends javax.swing.JFrame {
 
         STATUSLabel.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
         STATUSLabel.setForeground(new java.awt.Color(0, 100, 0));
-        STATUSLabel.setText("ONLINE");
+        STATUSLabel.setText("ONLINE!");
         STATUSLabel.setPreferredSize(new java.awt.Dimension(68, 18));
 
         jLabel3.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
@@ -125,101 +143,149 @@ public class LoadBalancer extends javax.swing.JFrame {
         nClients.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         nClients.setText("0");
 
+        helpBtn.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
+        helpBtn.setText("Help");
+        helpBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                helpBtnActionPerformed(evt);
+            }
+        });
+
+        helpTXT.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        helpTXT.setText("This process is main process");
+
+        helpTXT4.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        helpTXT4.setText("To start, click");
+
+        helpTXT2.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        helpTXT2.setText("Before starting other processes, this must be online.");
+
+        helpTXT3.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        helpTXT3.setText("If you want to change the ports, make sure, the respectful guis, are the same.");
+        helpTXT3.setToolTipText("");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(18, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
+                        .addContainerGap(13, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel2)
-                                    .addComponent(jLabel3))
-                                .addGap(13, 13, 13))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(jLabel7)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(MONITORPORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(STATUSLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addGroup(layout.createSequentialGroup()
-                                                .addComponent(SERVERPORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addGap(18, 18, 18)
-                                                .addComponent(connectBTN, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                            .addComponent(PORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 63, Short.MAX_VALUE)
-                                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                .addGap(18, 18, 18))))
+                            .addComponent(jLabel2)
+                            .addComponent(jLabel3))
+                        .addGap(13, 13, 13))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(helpBtn)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel7)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(1, 1, 1)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(STATUSLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel4)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(nServers, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 386, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 386, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(nClients, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addContainerGap())))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(PORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(helpTXT4, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(SERVERPORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(connectBTN, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 68, Short.MAX_VALUE)
+                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(18, 18, 18))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(MONITORPORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+            .addGroup(layout.createSequentialGroup()
+                .addGap(14, 14, 14)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(helpTXT, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(helpTXT2, javax.swing.GroupLayout.PREFERRED_SIZE, 332, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(jLabel4)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(nServers, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(nClients, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 386, Short.MAX_VALUE)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 386, Short.MAX_VALUE))
+                    .addComponent(helpTXT3, javax.swing.GroupLayout.PREFERRED_SIZE, 503, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(55, 55, 55)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(PORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel2))
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addGap(6, 6, 6)
-                                .addComponent(connectBTN))
+                                .addGap(55, 55, 55)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(PORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel2)))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(helpTXT4)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(jLabel3)
-                                    .addComponent(SERVERPORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                                    .addComponent(SERVERPORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(6, 6, 6)
+                                .addComponent(connectBTN))))
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(STATUSLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(STATUSLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(helpBtn))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(11, 11, 11)
+                .addGap(15, 15, 15)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel7)
-                    .addComponent(MONITORPORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 36, Short.MAX_VALUE)
+                    .addComponent(MONITORPORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel7))
+                .addGap(18, 18, 18)
+                .addComponent(helpTXT)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(helpTXT2)
+                .addGap(7, 7, 7)
+                .addComponent(helpTXT3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 17, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
                     .addComponent(nServers))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(18, 18, 18)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel5)
                     .addComponent(nClients))
-                .addGap(12, 12, 12)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(21, 21, 21))
+                .addGap(27, 27, 27))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Open all sockets servers, to permit connection from other units 
+     * @param evt 
+     */
+    
     private void connectBTNActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_connectBTNActionPerformed
 
         if (serverSocketClient != null) {
@@ -279,7 +345,6 @@ public class LoadBalancer extends javax.swing.JFrame {
                         DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
                         try {
                             String str = dataInputStream2.readUTF();
-                            System.out.println("TESTES->" + str);
                             if ("ImAliveServer".equals(str)) {
                                 System.out.println("Sending new Server ID->" + numberOfServers);
                                 dataOutputStream.writeUTF(String.valueOf(numberOfServers) + ";Server");
@@ -290,13 +355,13 @@ public class LoadBalancer extends javax.swing.JFrame {
                                 LoadBalancerRequestReceiver receiveRequests = new LoadBalancerRequestReceiver(allClientsSocketsConnected, s2, allRequestsOnEachServer);
                                 receiveRequests.start();
                                 StringBuilder newTextArea = new StringBuilder();
-                                for (Integer key : allServerSocketsConnected.keySet()) {
+                                allServerSocketsConnected.keySet().forEach(key -> {
                                     newTextArea.append("Server ID:")
                                             .append(key)
                                             .append(" = ")
                                             .append(allServerSocketsConnected.get(key))
                                             .append("\n");
-                                }
+                                });
                                 SERVERSTEXTAREA.setText(newTextArea.toString());
                                 numberOfServers++;
                                 nServers.setText(String.valueOf(numberOfServers));
@@ -306,7 +371,7 @@ public class LoadBalancer extends javax.swing.JFrame {
                                 dataOutputStream.writeUTF("999;Server");
                                 dataOutputStream.flush();
                             } else {
-                                System.out.println("YOU Are NOT SUPPOSED TO ENTER THIS ELSE!");
+                                System.out.println("error");
                             }
 
                         } catch (IOException ex) {
@@ -380,13 +445,13 @@ public class LoadBalancer extends javax.swing.JFrame {
                                 dataOutputStream.writeUTF(String.valueOf(numberOfClients) + ";Client");
                                 allClientsSocketsConnected.put(numberOfClients, s2);
                                 StringBuilder newTextArea = new StringBuilder();
-                                for (Integer key : allClientsSocketsConnected.keySet()) {
+                                allClientsSocketsConnected.keySet().forEach(key -> {
                                     newTextArea.append("Client ID:")
                                             .append(key)
                                             .append(" = ")
                                             .append(allClientsSocketsConnected.get(key))
                                             .append("\n");
-                                }
+                                });
                                 CLIENTSTEXTAREA.setText(newTextArea.toString());
                                 numberOfClients++;
                                 nClients.setText(String.valueOf(numberOfClients));
@@ -479,20 +544,19 @@ public class LoadBalancer extends javax.swing.JFrame {
                                 dataOutputStream.flush();
                             } else if (str.contains("Dead;")) {
 
-                                //Falta por para quando o servidor morre distribuir as tarefas pelos servidores   
                                 String[] arrOfStr = str.split(";", -2);
                                 System.out.println("LB_MONITOR-> THIS SERVER DIED->" + arrOfStr[1]);
                                 allServerSocketsConnected.remove(parseInt(arrOfStr[1]));
                                 allServerReceiverThreads.remove(parseInt(arrOfStr[1]));
                                 StringBuilder newTextArea = new StringBuilder();
                                 nServers.setText(String.valueOf(allServerSocketsConnected.size()));
-                                for (Integer key : allServerSocketsConnected.keySet()) {
+                                allServerSocketsConnected.keySet().forEach(key -> {
                                     newTextArea.append("Server ID:")
                                             .append(key)
                                             .append(" = ")
                                             .append(allServerSocketsConnected.get(key))
                                             .append("\n");
-                                }
+                                });
                                 SERVERSTEXTAREA.setText(newTextArea.toString());
 
                                 //in case the server had work
@@ -507,9 +571,9 @@ public class LoadBalancer extends javax.swing.JFrame {
                                 //get All keys
 
                                 ArrayList<Integer> servers = new ArrayList<>();
-                                for (Integer key : allServerSocketsConnected.keySet()) {
+                                allServerSocketsConnected.keySet().forEach(key -> {
                                     servers.add(key);
-                                }
+                                });
                                 
                                 int distribute = 0;
                                 for (int i = 0; i < temporaryRequests.size(); i++) {
@@ -546,6 +610,22 @@ public class LoadBalancer extends javax.swing.JFrame {
         workerServer3.execute();
     }//GEN-LAST:event_connectBTNActionPerformed
 
+    private void helpBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_helpBtnActionPerformed
+        if(click == 0){            
+            helpTXT.setVisible(true);
+            helpTXT2.setVisible(true);
+            helpTXT3.setVisible(true);
+            helpTXT4.setVisible(true);
+            click++;
+        }else{ 
+            helpTXT.setVisible(false);
+            helpTXT2.setVisible(false);
+            helpTXT3.setVisible(false);
+            helpTXT4.setVisible(false);
+            click = 0;
+        }
+    }//GEN-LAST:event_helpBtnActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -575,14 +655,11 @@ public class LoadBalancer extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    new LoadBalancer().setVisible(true);
-                } catch (IOException ex) {
-                    Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
-                }
+        java.awt.EventQueue.invokeLater(() -> {
+            try {
+                new LoadBalancer().setVisible(true);
+            } catch (IOException ex) {
+                Logger.getLogger(LoadBalancer.class.getName()).log(Level.SEVERE, null, ex);
             }
         });
     }
@@ -595,6 +672,11 @@ public class LoadBalancer extends javax.swing.JFrame {
     private javax.swing.JTextArea SERVERSTEXTAREA;
     private javax.swing.JLabel STATUSLabel;
     private javax.swing.JButton connectBTN;
+    private javax.swing.JButton helpBtn;
+    private javax.swing.JLabel helpTXT;
+    private javax.swing.JLabel helpTXT2;
+    private javax.swing.JLabel helpTXT3;
+    private javax.swing.JLabel helpTXT4;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

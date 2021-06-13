@@ -14,20 +14,37 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import javax.swing.SwingWorker;
 
+/**
+ * Client asks the number of iterations and receive the number of avogrado with
+ * the iterations asked
+ *
+ * @author António Ramos and Miguel Silva
+ */
 public class Client extends javax.swing.JFrame {
+    private int click = 0;
 
     private int numberOfRequests;
     private int id;
     private int portId;
     private int numberOfRequestsRejected;
     private Socket connectedSocket;
-    private boolean infiniteWhile = true;    
+    private boolean infiniteWhile = true;
     HashMap<Integer, String> allPendingRequests;
-    HashMap<Integer, String> allExecutedRequests; 
-    
+    HashMap<Integer, String> allExecutedRequests;
+
+    /**
+     * Constructor of Client
+     *
+     * @throws IOException
+     */
     public Client() throws IOException {
         initComponents();
         CONNECTIONREADYLabel.setVisible(false);
+        helpTXT.setVisible(false);
+        helpTXT2.setVisible(false);
+        helpTXT3.setVisible(false);
+        helpTXT4.setVisible(false);
+        helpTXT5.setVisible(false);
     }
 
     /**
@@ -58,6 +75,12 @@ public class Client extends javax.swing.JFrame {
         niter = new javax.swing.JTextField();
         pendRequests = new javax.swing.JLabel();
         exProcess = new javax.swing.JLabel();
+        helpBtn = new javax.swing.JButton();
+        helpTXT2 = new javax.swing.JLabel();
+        helpTXT3 = new javax.swing.JLabel();
+        helpTXT4 = new javax.swing.JLabel();
+        helpTXT = new javax.swing.JLabel();
+        helpTXT5 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -133,87 +156,134 @@ public class Client extends javax.swing.JFrame {
         exProcess.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         exProcess.setText("0");
 
+        helpBtn.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
+        helpBtn.setText("Help");
+        helpBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                helpBtnActionPerformed(evt);
+            }
+        });
+
+        helpTXT2.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        helpTXT2.setText("To start, click");
+
+        helpTXT3.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        helpTXT3.setText("To offline, click");
+        helpTXT3.setToolTipText("");
+
+        helpTXT4.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        helpTXT4.setText("Ask, requests to LB");
+
+        helpTXT.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        helpTXT.setText("Valid >= 1");
+
+        helpTXT5.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        helpTXT5.setText("= Load Balancer");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGap(20, 20, 20)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(41, 41, 41)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(jLabel3)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel6)
-                                .addGap(21, 21, 21)))
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(niter)
-                            .addComponent(PORTTextField))
-                        .addGap(18, 18, 18)
-                        .addComponent(ConBut, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(DiscBut, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(ReqBut, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(CONNECTIONREADYLabel))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(14, 14, 14)
-                                .addComponent(jLabel2)
+                                .addComponent(jLabel4)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(IDLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jLabel1))
+                                .addComponent(pendRequests, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jLabel5)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(exProcess, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(IDLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(CONNECTIONREADYLabel, javax.swing.GroupLayout.Alignment.TRAILING)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(helpBtn)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addComponent(jLabel4)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(pendRequests, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 49, Short.MAX_VALUE)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                                .addComponent(jLabel3)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addComponent(jLabel6)
+                                                .addGap(21, 21, 21)))
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                            .addComponent(niter)
+                                            .addComponent(PORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                    .addComponent(helpTXT5))
+                                .addGap(18, 18, 18)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(ConBut, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(helpTXT2))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addComponent(jLabel5)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(exProcess, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addGap(18, 18, 18))))
+                                        .addComponent(helpTXT3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addGap(10, 10, 10))
+                                    .addComponent(DiscBut, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(ReqBut, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(helpTXT4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(54, 54, 54)
+                                .addComponent(helpTXT, javax.swing.GroupLayout.PREFERRED_SIZE, 112, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 10, Short.MAX_VALUE)))
+                .addGap(18, 18, 18))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(CONNECTIONREADYLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel2)
-                    .addComponent(IDLabel))
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(34, 34, 34)
+                        .addComponent(CONNECTIONREADYLabel)
+                        .addGap(1, 1, 1)
+                        .addComponent(helpBtn)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel2)
+                            .addComponent(IDLabel))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(helpTXT5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 7, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel3)
                             .addComponent(PORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(12, 12, 12)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(niter, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel6))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 47, Short.MAX_VALUE)
+                            .addComponent(jLabel6)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(helpTXT2)
+                            .addComponent(helpTXT3)
+                            .addComponent(helpTXT4, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(ConBut)
                             .addComponent(DiscBut)
                             .addComponent(ReqBut))
-                        .addGap(72, 72, 72)))
+                        .addGap(21, 21, 21)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(helpTXT)
+                .addGap(31, 31, 31)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jLabel4)
@@ -227,24 +297,42 @@ public class Client extends javax.swing.JFrame {
                         .addComponent(jScrollPane1))
                     .addGroup(layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 157, Short.MAX_VALUE)))
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 133, Short.MAX_VALUE)))
                 .addGap(21, 21, 21))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Request number of avogrado
+     *
+     * @param evt
+     */
+
     private void ReqButActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ReqButActionPerformed
         if (this.connectedSocket == null) {
             return;
         }
         
-        ClientRequest clientRequest = new ClientRequest(pendRequests,this.numberOfRequests, this.id, Integer.parseInt(niter.getText()), portId, allPendingRequests, PENDINGTEXTAREA);
-        clientRequest.start();
-
+        int iteracions = Integer.parseInt(niter.getText());
+        if(iteracions >= 1){
+            ClientRequest clientRequest = new ClientRequest(pendRequests, this.numberOfRequests, this.id, iteracions, portId, allPendingRequests, PENDINGTEXTAREA);
+            clientRequest.start();
+        }else{
+            helpTXT.setForeground(Color.red);
+            helpTXT.setVisible(true);
+        }
+        
+       
         this.numberOfRequests++;
-
     }//GEN-LAST:event_ReqButActionPerformed
+
+    /**
+     * Disconnect client from loadBalance set all parameters to zero
+     *
+     * @param evt
+     */
 
     private void DiscButActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DiscButActionPerformed
         if (this.connectedSocket == null) {
@@ -271,6 +359,11 @@ public class Client extends javax.swing.JFrame {
         infiniteWhile = false;
     }//GEN-LAST:event_DiscButActionPerformed
 
+    /**
+     * Connects to load balancer and receive a id
+     *
+     * @param evt
+     */
     private void ConButActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ConButActionPerformed
 
         if (this.connectedSocket != null) {
@@ -326,9 +419,8 @@ public class Client extends javax.swing.JFrame {
                     dataOutputStream.writeUTF(request);
                     dataOutputStream.flush();
                     String str = dataInputStream.readUTF();
-                    String[] arrOfStr = str.split(";",-2);
-                    if(!arrOfStr[1].equals("Client"))
-                    {
+                    String[] arrOfStr = str.split(";", -2);
+                    if (!arrOfStr[1].equals("Client")) {
                         System.out.println("MISTAKE-SERVER PORT");
                         CONNECTIONREADYLabel.setForeground(Color.red);
                         CONNECTIONREADYLabel.setText("Error/Dont Pick Server Port");
@@ -344,46 +436,42 @@ public class Client extends javax.swing.JFrame {
 
                 infiniteWhile = true;
 
-                while(infiniteWhile)
-                {
+                while (infiniteWhile) {
                     //Receber Requests!
                     String requestInfo = dataInputStream.readUTF();
-                    String[] arrOfStr = requestInfo.split(Pattern.quote("|"),-2);
+                    String[] arrOfStr = requestInfo.split(Pattern.quote("|"), -2);
                     System.out.println(arrOfStr[1]);
                     allPendingRequests.remove(parseInt(arrOfStr[1]));
                     System.out.println(allPendingRequests.toString());
                     allExecutedRequests.put(parseInt(arrOfStr[1]), requestInfo);
-                    System.out.println(allExecutedRequests.size()+"--");
-                    if(!allPendingRequests.isEmpty())
-                    {
+                    System.out.println(allExecutedRequests.size() + "--");
+                    if (!allPendingRequests.isEmpty()) {
                         StringBuilder newTextArea = new StringBuilder();
-                        for (Integer key : allPendingRequests.keySet()) {
+                        allPendingRequests.keySet().forEach(key -> {
                             newTextArea.append("Request-")
-                            .append(key)
-                            .append(" : ")
-                            .append(allPendingRequests.get(key))
-                            .append("\n");
-                        }
+                                    .append(key)
+                                    .append(" : ")
+                                    .append(allPendingRequests.get(key))
+                                    .append("\n");
+                        });
 
                         PENDINGTEXTAREA.setText(newTextArea.toString());
-                    }
-                    else
-                    {
+                    } else {
                         PENDINGTEXTAREA.setText("");
                     }
                     StringBuilder newTextArea2 = new StringBuilder();
                     pendRequests.setText(String.valueOf(allPendingRequests.size()));
 
                     exProcess.setText(String.valueOf(allExecutedRequests.size()));
-                    for (Integer key : allExecutedRequests.keySet()) {
+                    allExecutedRequests.keySet().forEach(key -> {
                         newTextArea2.append("Request-")
-                        .append(key)
-                        .append(" : ")
-                        .append(allExecutedRequests.get(key))
-                        .append("\n");
-                    }
+                                .append(key)
+                                .append(" : ")
+                                .append(allExecutedRequests.get(key))
+                                .append("\n");
+                    });
                     EXECUTEDTEXTAREA.setText(newTextArea2.toString());
-                    System.out.println("CLIENT->"+requestInfo);
+                    System.out.println("CLIENT->" + requestInfo);
                 }
 
                 return true;
@@ -398,6 +486,24 @@ public class Client extends javax.swing.JFrame {
         };
         worker.execute();
     }//GEN-LAST:event_ConButActionPerformed
+
+    private void helpBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_helpBtnActionPerformed
+        if(click == 0){
+            helpTXT.setVisible(true);
+            helpTXT2.setVisible(true);
+            helpTXT3.setVisible(true);
+            helpTXT4.setVisible(true);
+            helpTXT5.setVisible(true);
+            click++;
+        }else{
+            helpTXT.setVisible(false);
+            helpTXT2.setVisible(false);
+            helpTXT3.setVisible(false);
+            helpTXT4.setVisible(false);
+            helpTXT5.setVisible(false);
+            click = 0;
+        }
+    }//GEN-LAST:event_helpBtnActionPerformed
 
     /**
      * @param args the command line arguments
@@ -428,14 +534,11 @@ public class Client extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    new Client().setVisible(true);
-                } catch (IOException ex) {
-                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-                }
+        java.awt.EventQueue.invokeLater(() -> {
+            try {
+                new Client().setVisible(true);
+            } catch (IOException ex) {
+                Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
             }
         });
     }
@@ -450,6 +553,12 @@ public class Client extends javax.swing.JFrame {
     private javax.swing.JTextField PORTTextField;
     private javax.swing.JButton ReqBut;
     private javax.swing.JLabel exProcess;
+    private javax.swing.JButton helpBtn;
+    private javax.swing.JLabel helpTXT;
+    private javax.swing.JLabel helpTXT2;
+    private javax.swing.JLabel helpTXT3;
+    private javax.swing.JLabel helpTXT4;
+    private javax.swing.JLabel helpTXT5;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

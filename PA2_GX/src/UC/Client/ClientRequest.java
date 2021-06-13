@@ -1,11 +1,7 @@
 package UC.Client;
 
-import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.HashMap;
@@ -13,6 +9,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JLabel;
 import javax.swing.JTextArea;
+
+/**
+ * Responsible to send requests 
+ * @author António Ramos and Miguel Silva
+ */
 
 public class ClientRequest extends Thread {
 
@@ -25,6 +26,16 @@ public class ClientRequest extends Thread {
     JTextArea PENDINGTEXTAREA;
     JLabel pendReq;
 
+    /**
+     * Constructor of Client Request
+     * @param pendReq - total of requests to display on gui
+     * @param requestId - number of request
+     * @param clientId - number of client
+     * @param numberOfIterations - number of iterations of avogrado
+     * @param socketPort - socket port number of load balance, to connect and send information
+     * @param allPendingRequests - database where all pending requests are stored 
+     * @param PENDINGTEXTAREA - are where displayed the pending requests
+     */
     public ClientRequest(JLabel pendReq,int requestId, int clientId, int numberOfIterations, int socketPort, HashMap<Integer, String> allPendingRequests, JTextArea PENDINGTEXTAREA) {
         this.pendReq = pendReq;
         this.requestId = requestId;
@@ -35,6 +46,10 @@ public class ClientRequest extends Thread {
         this.PENDINGTEXTAREA = PENDINGTEXTAREA;
     }
 
+    /**
+     * run thread of requests 
+     */
+    
     @Override
     public void run() {
         try {
@@ -56,14 +71,13 @@ public class ClientRequest extends Thread {
         allPendingRequests.put(requestId, str);
         pendReq.setText(String.valueOf(allPendingRequests.size()));
         StringBuilder newTextArea = new StringBuilder();
-        System.out.println("all " + allPendingRequests.get(0));
-        for (Integer key : allPendingRequests.keySet()) {
+        allPendingRequests.keySet().forEach(key -> {
             newTextArea.append("Request-")
                     .append(key)
                     .append(" : ")
                     .append(allPendingRequests.get(key))
                     .append("\n");
-        }
+        });
         PENDINGTEXTAREA.setText(newTextArea.toString());
         try {
             dataOutputStream.writeUTF(str);

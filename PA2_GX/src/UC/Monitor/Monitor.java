@@ -2,13 +2,10 @@ package UC.Monitor;
 
 import UC.LoadBalancer.LoadBalancer;
 import java.awt.Color;
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import static java.lang.Integer.parseInt;
 import java.net.ServerSocket;
@@ -17,23 +14,36 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 import javax.swing.SwingWorker;
 
-public class Monitor extends javax.swing.JFrame {
+/**
+ * Responsible for monitoring server
+ * This monitorization includes number of requests, check if is alive
+ * @author António Ramos and Miguel Silva
+ */
 
+public class Monitor extends javax.swing.JFrame {
+    private int click = 0;
     private int portId;
     private int monitorPort;
     private Socket connectedSocket;
     private Socket lbSocket;
-    HashMap<Integer, Socket> allServerSocketsConnected = new HashMap<Integer, Socket>();
-    HashMap<Integer, String> allServerSocketsDisconnected = new HashMap<Integer, String>();
-    HashMap<Integer, Integer> numberOfWorkLoadEachThreadServer = new HashMap<Integer, Integer>();
-    HashMap<Integer, ArrayList> allRequestsOnEachServer = new HashMap<Integer, ArrayList>();
+    HashMap<Integer, Socket> allServerSocketsConnected = new HashMap<>();
+    HashMap<Integer, String> allServerSocketsDisconnected = new HashMap<>();
+    HashMap<Integer, Integer> numberOfWorkLoadEachThreadServer = new HashMap<>();
+    HashMap<Integer, ArrayList> allRequestsOnEachServer = new HashMap<>();
 
+    
+    /**
+     * Constructor of monitor 
+     * @throws IOException 
+     */
     public Monitor() throws IOException {
         initComponents();
         CONNECTIONREADYLabel.setVisible(false);
+        helpTXT.setVisible(false);
+        helpTXT2.setVisible(false);
+        helpTXT3.setVisible(false);
     }
 
     @SuppressWarnings("unchecked")
@@ -57,6 +67,10 @@ public class Monitor extends javax.swing.JFrame {
         jLabel6 = new javax.swing.JLabel();
         jScrollPane4 = new javax.swing.JScrollPane();
         REQUESTSEACHSERVER = new javax.swing.JTextArea();
+        helpBtn = new javax.swing.JButton();
+        helpTXT2 = new javax.swing.JLabel();
+        helpTXT = new javax.swing.JLabel();
+        helpTXT3 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -75,15 +89,10 @@ public class Monitor extends javax.swing.JFrame {
 
         PORTTextField.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         PORTTextField.setText("6666");
-        PORTTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                PORTTextFieldActionPerformed(evt);
-            }
-        });
 
         CONNECTIONREADYLabel.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
         CONNECTIONREADYLabel.setForeground(new java.awt.Color(0, 100, 0));
-        CONNECTIONREADYLabel.setText("ONLINE");
+        CONNECTIONREADYLabel.setText("ONLINE!");
 
         jLabel2.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         jLabel2.setText("Ip/Port:");
@@ -100,11 +109,6 @@ public class Monitor extends javax.swing.JFrame {
 
         TEXTFIELDMONITORS.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         TEXTFIELDMONITORS.setText("1111");
-        TEXTFIELDMONITORS.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                TEXTFIELDMONITORSActionPerformed(evt);
-            }
-        });
 
         jLabel5.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         jLabel5.setText("Monitor Socket:");
@@ -120,17 +124,35 @@ public class Monitor extends javax.swing.JFrame {
         REQUESTSEACHSERVER.setRows(5);
         jScrollPane4.setViewportView(REQUESTSEACHSERVER);
 
+        helpBtn.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
+        helpBtn.setText("Help");
+        helpBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                helpBtnActionPerformed(evt);
+            }
+        });
+
+        helpTXT2.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        helpTXT2.setText("To start, click");
+
+        helpTXT.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        helpTXT.setText("= Load Balancer");
+
+        helpTXT3.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        helpTXT3.setText("Responsible to monitoring Servers");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(CONNECTIONREADYLabel)
-                .addGap(52, 52, 52))
             .addGroup(layout.createSequentialGroup()
                 .addGap(20, 20, 20)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(helpBtn)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(CONNECTIONREADYLabel)
+                        .addGap(52, 52, 52))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 164, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -141,56 +163,79 @@ public class Monitor extends javax.swing.JFrame {
                                 .addComponent(Label, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel5)
-                                    .addComponent(jLabel2))
-                                .addGap(15, 15, 15)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(TEXTFIELDMONITORS, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addComponent(PORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(27, 27, 27)
-                                        .addComponent(startButton, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                .addComponent(jScrollPane4, javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(layout.createSequentialGroup()
-                                            .addGap(53, 53, 53)
-                                            .addComponent(jLabel4))
-                                        .addGroup(layout.createSequentialGroup()
-                                            .addGap(33, 33, 33)
-                                            .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))))))
+                                        .addGap(84, 84, 84)
+                                        .addComponent(helpTXT))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel5)
+                                            .addComponent(jLabel2))
+                                        .addGap(15, 15, 15)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                            .addComponent(TEXTFIELDMONITORS, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(PORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                .addGap(18, 18, 18)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(startButton, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(0, 0, Short.MAX_VALUE))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                        .addGap(0, 0, Short.MAX_VALUE)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                                .addComponent(helpTXT2)
+                                                .addGap(113, 113, 113)
+                                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                            .addComponent(helpTXT3, javax.swing.GroupLayout.Alignment.TRAILING)))))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                    .addComponent(jScrollPane4, javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGap(33, 33, 33)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(jLabel4))))
+                                .addGap(0, 0, Short.MAX_VALUE)))
                         .addGap(35, 35, 35))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(9, 9, 9)
-                .addComponent(CONNECTIONREADYLabel)
+                .addGap(6, 6, 6)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(CONNECTIONREADYLabel)
+                    .addComponent(helpBtn))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel2)
-                            .addComponent(PORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(18, 18, 18)
+                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(helpTXT3)
+                        .addGap(1, 1, 1))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(helpTXT)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(PORTTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel2))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel5)
                             .addComponent(TEXTFIELDMONITORS, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(43, 43, 43)
-                                .addComponent(jLabel4)
-                                .addGap(18, 18, 18))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel3)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
+                        .addGap(18, 18, 18))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(helpTXT2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(startButton)
+                        .addGap(36, 36, 36)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel3)
+                    .addComponent(jLabel4))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -198,12 +243,9 @@ public class Monitor extends javax.swing.JFrame {
                         .addComponent(jLabel6)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 17, Short.MAX_VALUE))
+                        .addGap(0, 34, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(startButton))
-                        .addGap(259, 259, 259)
+                        .addGap(181, 181, 181)
                         .addComponent(Label, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
@@ -211,6 +253,12 @@ public class Monitor extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * connect function
+     * connect to load balancer, only if it's online
+     * @param evt 
+     */
+    
     private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
         SwingWorker worker = new SwingWorker<Boolean, Integer>() {
 
@@ -279,13 +327,13 @@ public class Monitor extends javax.swing.JFrame {
                     String info = null;
 
                     StringBuilder newTextArea = new StringBuilder();
-                    for (Integer key : numberOfWorkLoadEachThreadServer.keySet()) {
+                    numberOfWorkLoadEachThreadServer.keySet().forEach(key -> {
                         newTextArea.append("")
                                 .append(key)
                                 .append(";")
                                 .append(numberOfWorkLoadEachThreadServer.get(key))
                                 .append("|");
-                    }
+                    });
                     System.out.println("STRING A SER ENVIADA->" + newTextArea.toString());
                     dataOutputStream.writeUTF(newTextArea.toString());
                 }
@@ -348,13 +396,13 @@ public class Monitor extends javax.swing.JFrame {
                         dataOutputStream.writeUTF("MonitorAc");
                         allServerSocketsConnected.put(parseInt(arrOfStr[1]), connectedSocket);
                         StringBuilder newTextArea = new StringBuilder();
-                        for (Integer key : allServerSocketsConnected.keySet()) {
+                        allServerSocketsConnected.keySet().forEach(key -> {
                             newTextArea.append("Server ID:")
                                     .append(key)
                                     .append(" = ")
                                     .append(allServerSocketsConnected.get(key))
                                     .append("\n");
-                        }
+                        });
                         System.out.println(newTextArea.toString());
                         EXECUTEDTEXTAREA1.setText(newTextArea.toString());
                         MonitorHeartBeat HB = new MonitorHeartBeat(s2, allServerSocketsConnected, parseInt(arrOfStr[1]), EXECUTEDTEXTAREA1, EXECUTEDTEXTAREA, allServerSocketsDisconnected, portId, numberOfWorkLoadEachThreadServer,allRequestsOnEachServer, REQUESTSEACHSERVER);
@@ -373,13 +421,19 @@ public class Monitor extends javax.swing.JFrame {
         worker2.execute();
     }//GEN-LAST:event_startButtonActionPerformed
 
-    private void PORTTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_PORTTextFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_PORTTextFieldActionPerformed
-
-    private void TEXTFIELDMONITORSActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_TEXTFIELDMONITORSActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_TEXTFIELDMONITORSActionPerformed
+    private void helpBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_helpBtnActionPerformed
+        if(click == 0){
+            helpTXT.setVisible(true);
+            helpTXT2.setVisible(true);
+            helpTXT3.setVisible(true);
+            click++;
+        }else{
+            helpTXT.setVisible(false);
+            helpTXT2.setVisible(false);
+            helpTXT3.setVisible(false);
+            click = 0;
+        }
+    }//GEN-LAST:event_helpBtnActionPerformed
 
     /**
      * @param args the command line arguments
@@ -410,13 +464,11 @@ public class Monitor extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                try {
-                    new Monitor().setVisible(true);
-                } catch (IOException ex) {
-                    Logger.getLogger(Monitor.class.getName()).log(Level.SEVERE, null, ex);
-                }
+        java.awt.EventQueue.invokeLater(() -> {
+            try {
+                new Monitor().setVisible(true);
+            } catch (IOException ex) {
+                Logger.getLogger(Monitor.class.getName()).log(Level.SEVERE, null, ex);
             }
         });
     }
@@ -430,6 +482,10 @@ public class Monitor extends javax.swing.JFrame {
     private javax.swing.JTextField PORTTextField;
     private javax.swing.JTextArea REQUESTSEACHSERVER;
     private javax.swing.JTextField TEXTFIELDMONITORS;
+    private javax.swing.JButton helpBtn;
+    private javax.swing.JLabel helpTXT;
+    private javax.swing.JLabel helpTXT2;
+    private javax.swing.JLabel helpTXT3;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

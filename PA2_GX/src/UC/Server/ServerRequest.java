@@ -102,7 +102,7 @@ public class ServerRequest extends Thread {
             r.append(sb.toString()).append("|");
 
             System.out.println("SERVER_RESQUEST_RECEBIDO->" + request + "Port->" + SOCKET_PORT);
-            sleep(1000 * niter); // 10s
+            sleep(5000 * niter); // 5s
             dataOutputStream.writeUTF(r.toString());
             dataOutputStream.flush();
             System.out.println("SERVER_REQUEST_ENVIADO " + r.toString());
