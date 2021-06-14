@@ -37,17 +37,13 @@ public class LoadBalancerRequestReceiver extends Thread {
         this.allRequestsOnEachServer = allRequestsOnEachServer;
     }
 
-    /**
-     * thread 
-     */
-    
+  
     @Override
     public void run() {
         while (true) {
             try {
                 DataInputStream dataInputStream = new DataInputStream(s2.getInputStream());
                 str = dataInputStream.readUTF();
-
             } catch (IOException ex) {
                 Logger.getLogger(LoadBalancerRequestReceiver.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -80,7 +76,6 @@ public class LoadBalancerRequestReceiver extends Thread {
                 }
             }
 
-            System.out.println(arrOfStr[0]);
             System.out.println(allClientsSocketsConnected.get(parseInt(arrOfStr[0])).toString());
             OutputStream outputStreamClient = null;
             try {

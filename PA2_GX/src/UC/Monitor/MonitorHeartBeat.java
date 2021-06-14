@@ -1,11 +1,8 @@
 package UC.Monitor;
 
 import UC.LoadBalancer.LoadBalancerRequest;
-import UC.Server.ServerRequest;
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,7 +13,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JLabel;
 import javax.swing.JTextArea;
 
 public class MonitorHeartBeat extends Thread {
@@ -90,9 +86,7 @@ public class MonitorHeartBeat extends Thread {
                 String[] requestsArrOfStr = arrOfStr[1].split(",", -2);
 
                 ArrayList<String> temp = new ArrayList<>();
-                for (int i = 0; i < requestsArrOfStr.length; i++) {
-                    temp.add(requestsArrOfStr[i]);
-                }
+                temp.addAll(Arrays.asList(requestsArrOfStr));
                 int flagRepetition = 0;
                 if (allRequestsOnEachServer.containsKey(id)) {
                     if (temp.equals(allRequestsOnEachServer.get(id))) {
@@ -106,16 +100,20 @@ public class MonitorHeartBeat extends Thread {
 
                 if (flagRepetition == 0) {
                     StringBuilder newTextArea3 = new StringBuilder();
-                    for (Integer key : allRequestsOnEachServer.keySet()) {
+                    allRequestsOnEachServer.keySet().stream().map(key -> {
                         newTextArea3.append("Server ID:")
                                 .append(key)
                                 .append(" = ");
+                        return key;
+                    }).map(key -> {
                         for (int i = 0; i < allRequestsOnEachServer.get(key).size(); i++) {
                             newTextArea3.append(allRequestsOnEachServer.get(key).get(i).toString())
-                            .append("-");
+                                    .append("-");
                         }
+                        return key;
+                    }).forEachOrdered(_item -> {
                         newTextArea3.append("\n");
-                    }
+                    });
                     REQUESTSEACHSERVER.setText(newTextArea3.toString());
                 }
 

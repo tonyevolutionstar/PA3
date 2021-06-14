@@ -67,7 +67,6 @@ public class ClientRequest extends Thread {
 
         DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
         String str =  String.valueOf(clientId) + "|" + String.valueOf(this.requestId) + "|00|01|" + String.valueOf(this.numberOfIterations) + "|0|";
-        System.out.println("str " + str);
         allPendingRequests.put(requestId, str);
         pendReq.setText(String.valueOf(allPendingRequests.size()));
         StringBuilder newTextArea = new StringBuilder();

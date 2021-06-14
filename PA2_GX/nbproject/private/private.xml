@@ -5,13 +5,8 @@
         <group>
             <file>file:/C:/Users/tonya/Documents/PA3/PA2_GX/src/UC/Server/Server.java</file>
             <file>file:/C:/Users/tonya/Documents/PA3/PA2_GX/src/UC/Server/ServerRequest.java</file>
-            <file>file:/C:/Users/tonya/Documents/PA3/PA2_GX/src/UC/Client/ClientRequest.java</file>
             <file>file:/C:/Users/tonya/Documents/PA3/PA2_GX/src/UC/LoadBalancer/LoadBalancer.java</file>
             <file>file:/C:/Users/tonya/Documents/PA3/PA2_GX/src/UC/Monitor/Monitor.java</file>
-            <file>file:/C:/Users/tonya/Documents/PA3/PA2_GX/src/UC/Monitor/MonitorHeartBeat.java</file>
-            <file>file:/C:/Users/tonya/Documents/PA3/PA2_GX/src/UC/Server/ServerSharedRegion.java</file>
-            <file>file:/C:/Users/tonya/Documents/PA3/PA2_GX/src/UC/LoadBalancer/LoadBalancerRequest.java</file>
-            <file>file:/C:/Users/tonya/Documents/PA3/PA2_GX/src/UC/LoadBalancer/LoadBalancerRequestReceiver.java</file>
             <file>file:/C:/Users/tonya/Documents/PA3/PA2_GX/src/UC/Client/Client.java</file>
         </group>
     </open-files>

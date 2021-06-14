@@ -504,7 +504,6 @@ public class Server extends javax.swing.JFrame {
                         connectedSocket = null;
                         return false;
                     }
-
                 } catch (IOException e) {
                 }
                 while (true) {
@@ -519,7 +518,6 @@ public class Server extends javax.swing.JFrame {
                     System.out.println(sendInfoToMonitor);
                     dataOutputStream.writeUTF(String.valueOf(concurrentThreadsWorking.size() + serverQueue.size()) + ";" +sendInfoToMonitor);
                 }
-
             }
 
             protected void process(Integer chunks) {}
