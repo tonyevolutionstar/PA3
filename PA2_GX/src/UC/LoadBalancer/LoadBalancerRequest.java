@@ -1,33 +1,42 @@
 package UC.LoadBalancer;
 
-import UC.Client.*;
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import static java.lang.Integer.parseInt;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JLabel;
 
+
+/**
+ * Responsible handle resquests 
+ * @author António Ramos and Miguel Silva
+ */
 public class LoadBalancerRequest extends Thread {
 
     private Socket SOCKET_PORT;
-    private Socket MONITOR_SOCKET_PORT;
-    private String requestStr;
-    private int SERVERIDINCASECRASH;
+    private final Socket MONITOR_SOCKET_PORT;
+    private final String requestStr;
+    private final int SERVERIDINCASECRASH;
     HashMap<Integer, Socket> allClientsSocketsConnected;
     HashMap<Integer, Socket> allServersSocketsConnected;
     HashMap<Integer, ArrayList> allRequestsOnEachServer;
 
+    /**
+     * Constructor of Load Balancer Request
+     * @param requestStr - request string from client
+     * @param allServersSocketsConnected - hashmap of all sockets connected
+     * @param serverSocketMonitor - server port from monitor
+     * @param allClientsSocketsConnected - hashmap of all clients connected
+     * @param allRequestsOnEachServer - hashmap of all active requests on each server 
+     * @param SERVERIDINCASECRASH - variable for checking if server dies
+     */
+    
     public LoadBalancerRequest(String requestStr, HashMap<Integer, Socket> allServersSocketsConnected, Socket serverSocketMonitor, HashMap<Integer, Socket> allClientsSocketsConnected, HashMap<Integer, ArrayList> allRequestsOnEachServer, int SERVERIDINCASECRASH) {
         this.requestStr = requestStr;
         this.allServersSocketsConnected = allServersSocketsConnected;
@@ -37,9 +46,11 @@ public class LoadBalancerRequest extends Thread {
         this.SERVERIDINCASECRASH = SERVERIDINCASECRASH;
     }
 
+    /**
+     * thread of load balancer, created when receive infos
+     */
     @Override
     public void run() {
-
         try {
             DataOutputStream dataOutputStream4 = new DataOutputStream(this.MONITOR_SOCKET_PORT.getOutputStream());
             dataOutputStream4.writeUTF("NeedInfoPls");
@@ -51,8 +62,8 @@ public class LoadBalancerRequest extends Thread {
             String[] arrOfStr = infoFromMonitor.split("[|]", -2);
 
             if (SERVERIDINCASECRASH == 9999999) {
-                for (int i = 0; i < arrOfStr.length; i++) {
-                    String[] arrOfStrData = arrOfStr[i].split(";", -2);
+                for (String arrOfStr1 : arrOfStr) {
+                    String[] arrOfStrData = arrOfStr1.split(";", -2);
                     if (arrOfStrData.length == 1) {
                         break;
                     }
@@ -60,12 +71,10 @@ public class LoadBalancerRequest extends Thread {
                         lowestWork = parseInt(arrOfStrData[1]);
                         serverWithLowestWork = parseInt(arrOfStrData[0]);
                     }
-
                 }
                 System.out.println("SERVIDOR SELECIONADO! ->" + serverWithLowestWork);
             }
-            else
-            {
+            else{
                 serverWithLowestWork = SERVERIDINCASECRASH;
             }
             //Saving in a HashTable in case of a fail
@@ -78,22 +87,11 @@ public class LoadBalancerRequest extends Thread {
                 Logger.getLogger(LoadBalancerRequest.class.getName()).log(Level.SEVERE, null, ex);
             }
             DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
-
-            InputStream inputStream = null;
-            try {
-                inputStream = this.allServersSocketsConnected.get(serverWithLowestWork).getInputStream();
-            } catch (IOException ex) {
-                Logger.getLogger(LoadBalancerRequest.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            DataInputStream dataInputStream = new DataInputStream(inputStream);
-
             dataOutputStream.writeUTF(requestStr);
             dataOutputStream.flush();
             System.out.println("LOAD_BALANCER_REQUEST_ENVIADO->" + requestStr + SOCKET_PORT);
-
         } catch (IOException ex) {
             Logger.getLogger(LoadBalancerRequest.class.getName()).log(Level.SEVERE, null, ex);
         }
-
     }
 }

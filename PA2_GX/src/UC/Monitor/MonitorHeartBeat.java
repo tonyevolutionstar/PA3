@@ -1,11 +1,8 @@
 package UC.Monitor;
 
 import UC.LoadBalancer.LoadBalancerRequest;
-import UC.Server.ServerRequest;
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,22 +13,35 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JLabel;
 import javax.swing.JTextArea;
 
 public class MonitorHeartBeat extends Thread {
 
-    private Socket serverSocket;
-    private int lbSocketPort;
-    private HashMap<Integer, Socket> allServerSocketsConnected;
-    private HashMap<Integer, String> allServerSocketsDisconnected;
-    private HashMap<Integer, Integer> numberOfWorkLoadEachThreadServer;
-    private int id;
+    private final Socket serverSocket;
+    private final int lbSocketPort;
+    private final HashMap<Integer, Socket> allServerSocketsConnected;
+    private final HashMap<Integer, String> allServerSocketsDisconnected;
+    private final HashMap<Integer, Integer> numberOfWorkLoadEachThreadServer;
+    private final int id;
     JTextArea EXECUTEDTEXTAREA;
     JTextArea EXECUTEDTEXTAREA1;
     JTextArea REQUESTSEACHSERVER;
     HashMap<Integer, ArrayList> allRequestsOnEachServer;
 
+    /**
+     * Constructor of Monitor Heart beat
+     * @param s2 - information of socket
+     * @param allServerSocketsConnected - hashmap for saves all servers connected 
+     * @param id - id 
+     * @param EXECUTEDTEXTAREA - servers offline
+     * @param EXECUTEDTEXTAREA1 - servers online
+     * @param allServerSocketsDisconnected - hashmap for saves all servers disconnected 
+     * @param lbSocketPort - socket port of load balancer
+     * @param numberOfWorkLoadEachThreadServer 
+     * @param allRequestsOnEachServer
+     * @param REQUESTSEACHSERVER 
+     */
+    
     public MonitorHeartBeat(Socket s2, HashMap<Integer, Socket> allServerSocketsConnected, int id, JTextArea EXECUTEDTEXTAREA, JTextArea EXECUTEDTEXTAREA1, HashMap<Integer, String> allServerSocketsDisconnected, int lbSocketPort, HashMap<Integer, Integer> numberOfWorkLoadEachThreadServer, HashMap<Integer, ArrayList> allRequestsOnEachServer, JTextArea REQUESTSEACHSERVER) {
         this.serverSocket = s2;
         this.lbSocketPort = lbSocketPort;
@@ -45,6 +55,9 @@ public class MonitorHeartBeat extends Thread {
         this.REQUESTSEACHSERVER = REQUESTSEACHSERVER;
     }
 
+    /**
+    * thread 
+    */
     @Override
     public void run() {
 
@@ -73,9 +86,7 @@ public class MonitorHeartBeat extends Thread {
                 String[] requestsArrOfStr = arrOfStr[1].split(",", -2);
 
                 ArrayList<String> temp = new ArrayList<>();
-                for (int i = 0; i < requestsArrOfStr.length; i++) {
-                    temp.add(requestsArrOfStr[i]);
-                }
+                temp.addAll(Arrays.asList(requestsArrOfStr));
                 int flagRepetition = 0;
                 if (allRequestsOnEachServer.containsKey(id)) {
                     if (temp.equals(allRequestsOnEachServer.get(id))) {
@@ -89,16 +100,20 @@ public class MonitorHeartBeat extends Thread {
 
                 if (flagRepetition == 0) {
                     StringBuilder newTextArea3 = new StringBuilder();
-                    for (Integer key : allRequestsOnEachServer.keySet()) {
+                    allRequestsOnEachServer.keySet().stream().map(key -> {
                         newTextArea3.append("Server ID:")
                                 .append(key)
                                 .append(" = ");
+                        return key;
+                    }).map(key -> {
                         for (int i = 0; i < allRequestsOnEachServer.get(key).size(); i++) {
                             newTextArea3.append(allRequestsOnEachServer.get(key).get(i).toString())
-                            .append("-");
+                                    .append("-");
                         }
+                        return key;
+                    }).forEachOrdered(_item -> {
                         newTextArea3.append("\n");
-                    }
+                    });
                     REQUESTSEACHSERVER.setText(newTextArea3.toString());
                 }
 
@@ -112,25 +127,25 @@ public class MonitorHeartBeat extends Thread {
         } catch (IOException ex) {
             this.allServerSocketsDisconnected.put(id, " DEAD");
             StringBuilder newTextArea2 = new StringBuilder();
-            for (Integer key : allServerSocketsDisconnected.keySet()) {
+            allServerSocketsDisconnected.keySet().forEach(key -> {
                 newTextArea2.append("Server ID:")
                         .append(key)
                         .append(" = ")
                         .append(allServerSocketsDisconnected.get(key))
                         .append("\n");
-            }
+            });
             EXECUTEDTEXTAREA1.setText(newTextArea2.toString());
             this.allServerSocketsConnected.remove(id);
             this.allRequestsOnEachServer.remove(id);
             this.numberOfWorkLoadEachThreadServer.remove(id);
             StringBuilder newTextArea = new StringBuilder();
-            for (Integer key : allServerSocketsConnected.keySet()) {
+            allServerSocketsConnected.keySet().forEach(key -> {
                 newTextArea.append("Server ID:")
                         .append(key)
                         .append(" = ")
                         .append(allServerSocketsConnected.get(key))
                         .append("\n");
-            }
+            });
             EXECUTEDTEXTAREA.setText(newTextArea.toString());
 
             Socket lbSocket = null;

@@ -5,29 +5,27 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  *
- * @author miguel
+ * @author António Ramos and Miguel Silva
  */
 public class ServerSharedRegion {
-    
+
     private final ReentrantLock rl = new ReentrantLock(true);
     private final Condition cEmpty;
-    
-    public ServerSharedRegion(){
+
+    public ServerSharedRegion() {
         cEmpty = rl.newCondition();
     }
-    
-    public void ifThreadIsDoneAndQueueUp()
-    {
-       rl.lock();
+
+    public void ifThreadIsDoneAndQueueUp() {
+        rl.lock();
         try {
             cEmpty.signal();
         } finally {
             rl.unlock();
         }
     }
-    
-    public void threadThatChecksConcurrentWorkingThreads() throws InterruptedException
-    {
+
+    public void threadThatChecksConcurrentWorkingThreads() throws InterruptedException {
         rl.lock();
         try {
             cEmpty.await();
@@ -35,5 +33,5 @@ public class ServerSharedRegion {
             rl.unlock();
         }
     }
-    
+
 }
