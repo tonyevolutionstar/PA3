@@ -45,12 +45,10 @@ public class LoadBalancerRequest extends Thread {
             dataOutputStream4.writeUTF("NeedInfoPls");
             DataInputStream dataInputStream4 = new DataInputStream(this.MONITOR_SOCKET_PORT.getInputStream());
             String infoFromMonitor = dataInputStream4.readUTF();
-            System.out.println("NOVA INFO->" + infoFromMonitor);
             int serverWithLowestWork = 0;
             int lowestWork = 5;
             //Split Servers
             String[] arrOfStr = infoFromMonitor.split("[|]", -2);
-            System.out.println(Arrays.toString(arrOfStr) + arrOfStr.length);
 
             if (SERVERIDINCASECRASH == 9999999) {
                 for (int i = 0; i < arrOfStr.length; i++) {
@@ -58,7 +56,6 @@ public class LoadBalancerRequest extends Thread {
                     if (arrOfStrData.length == 1) {
                         break;
                     }
-                    System.out.println(Arrays.toString(arrOfStrData) + arrOfStrData.length);
                     if (parseInt(arrOfStrData[1]) <= lowestWork) {
                         lowestWork = parseInt(arrOfStrData[1]);
                         serverWithLowestWork = parseInt(arrOfStrData[0]);

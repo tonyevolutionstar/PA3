@@ -349,8 +349,20 @@ public class Server extends javax.swing.JFrame {
                         updateNumbersGui();
                     } else {
                         //Rejected
-                        ServerRequest serverRequest = new ServerRequest(requestInfo, portId, concurrentThreadsWorking, countRequests, SSR, outPutStreamLB, 1, id, ALLEXECUTEDTEXTAREA, allProcessedRequests, TOTALREQUESTPRO);
-                        serverRequest.start();
+                        String[] val = requestInfo.split("[|]", 0);
+                        System.out.println(val.length);
+                        String rejectedRequest = val[0] + "|" + val[1] + "|" + String.valueOf(0) + id + "|" + String.valueOf(0) + String.valueOf(3) + "|" + val[4] + "|" + val[5] + "|";
+                        try {
+                            dataOutputStream.writeUTF(rejectedRequest);
+                        } catch (IOException ex) {
+                            Logger.getLogger(ServerRequest.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        try {
+                            dataOutputStream.flush();
+                        } catch (IOException ex) {
+                            Logger.getLogger(ServerRequest.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        System.out.println("SERVER_REQUEST_ENVIADO_REJECTED " + rejectedRequest);
                     }
                 }
             }
@@ -451,7 +463,7 @@ public class Server extends javax.swing.JFrame {
                                 .append(",");
                     }
                     System.out.println(sendInfoToMonitor);
-                    dataOutputStream.writeUTF(String.valueOf(concurrentThreadsWorking.size() + serverQueue.size()) + ";" +sendInfoToMonitor);
+                    dataOutputStream.writeUTF(String.valueOf(concurrentThreadsWorking.size() + serverQueue.size()) + ";" + sendInfoToMonitor);
                 }
 
             }

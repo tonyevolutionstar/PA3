@@ -46,8 +46,8 @@ public class LoadBalancerRequestReceiver extends Thread {
             str = dataInputStream.readUTF();
         } catch (IOException ex) {
             Logger.getLogger(LoadBalancerRequestReceiver.class.getName()).log(Level.SEVERE, null, ex);
+            return;
         }
-        System.out.println("LOAD_BALANCER_RECEIVED->" + str);
         if(str == null)
         {
             break;
@@ -57,20 +57,16 @@ public class LoadBalancerRequestReceiver extends Thread {
         for(int i = 0 ; i < allRequestsOnEachServer.size() ;i++)
         {
             int match2=0;
-            System.out.println("WTF->"+parseInt(arrOfStr[2]));
             if(allRequestsOnEachServer.get(parseInt(arrOfStr[2])).isEmpty())
             {
                 continue;
             }
             String savedRequestsServer = (String) allRequestsOnEachServer.get(parseInt(arrOfStr[2])).get(i);
-            System.out.println(savedRequestsServer);
             String[] arrOfStrSavedServer = str.split("[|]", -2);
-            System.out.println(arrOfStr[0]+"-"+arrOfStrSavedServer[0]);
             if(arrOfStrSavedServer[0].equals(arrOfStr[0]))
             {
                 match2++;
             }
-            System.out.println(arrOfStr[1]+"-"+arrOfStrSavedServer[1]);
             if(arrOfStrSavedServer[1].equals(arrOfStr[1]))
             {
                 match2++;
@@ -81,10 +77,6 @@ public class LoadBalancerRequestReceiver extends Thread {
                 break;
             }
         }
-        
-            System.out.println("VALOSASDAS->"+allRequestsOnEachServer.toString());
-        System.out.println(arrOfStr[0]);
-        System.out.println(allClientsSocketsConnected.get(parseInt(arrOfStr[0])).toString());
         OutputStream outputStreamClient = null;
         try {
             outputStreamClient = allClientsSocketsConnected.get(parseInt(arrOfStr[0])).getOutputStream();

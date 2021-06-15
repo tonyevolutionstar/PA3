@@ -279,9 +279,7 @@ public class LoadBalancer extends javax.swing.JFrame {
                         DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
                         try {
                             String str = dataInputStream2.readUTF();
-                            System.out.println("TESTES->" + str);
                             if ("ImAliveServer".equals(str)) {
-                                System.out.println("Sending new Server ID->" + numberOfServers);
                                 dataOutputStream.writeUTF(String.valueOf(numberOfServers) + ";Server");
                                 dataOutputStream.flush();
 
@@ -302,7 +300,6 @@ public class LoadBalancer extends javax.swing.JFrame {
                                 nServers.setText(String.valueOf(numberOfServers));
 
                             } else if ("ImAliveClient".equals(str) || "ImAliveMonitor".equals(str)) {
-                                System.out.println("CLIENT TRIED TO ENTER PORT SERVER");
                                 dataOutputStream.writeUTF("999;Server");
                                 dataOutputStream.flush();
                             } else {
@@ -478,8 +475,7 @@ public class LoadBalancer extends javax.swing.JFrame {
                                 dataOutputStream.writeUTF("999;Client");
                                 dataOutputStream.flush();
                             } else if (str.contains("Dead;")) {
-
-                                //Falta por para quando o servidor morre distribuir as tarefas pelos servidores   
+  
                                 String[] arrOfStr = str.split(";", -2);
                                 System.out.println("LB_MONITOR-> THIS SERVER DIED->" + arrOfStr[1]);
                                 allServerSocketsConnected.remove(parseInt(arrOfStr[1]));
@@ -513,6 +509,7 @@ public class LoadBalancer extends javax.swing.JFrame {
                                 
                                 int distribute = 0;
                                 for (int i = 0; i < temporaryRequests.size(); i++) {
+                                    System.out.println("TEMPOREQUESTS->"+i+"--->"+temporaryRequests.get(i));
                                     if(distribute >= servers.size())
                                     {
                                         distribute = 0;

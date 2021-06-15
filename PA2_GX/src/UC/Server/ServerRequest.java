@@ -56,7 +56,7 @@ public class ServerRequest extends Thread {
             System.out.println(val.length);
             String rejectedRequest = val[0] + "|" + val[1] + "|" + String.valueOf(0) + serverId + "|" + String.valueOf(0) + String.valueOf(3) + "|" + val[4] + "|" + val[5] + "|";
             try {
-                dataOutputStream.writeUTF(rejectedRequest + "|SERVER|");
+                dataOutputStream.writeUTF(rejectedRequest);
             } catch (IOException ex) {
                 Logger.getLogger(ServerRequest.class.getName()).log(Level.SEVERE, null, ex);
             }
