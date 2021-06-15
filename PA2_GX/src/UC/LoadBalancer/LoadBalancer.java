@@ -287,11 +287,11 @@ public class LoadBalancer extends javax.swing.JFrame {
      */
     
     private void connectBTNActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_connectBTNActionPerformed
-
+        //Logic to not spam button
         if (serverSocketClient != null) {
             return;
         }
-
+        //Logic to change GUI
         try {
             serverPort = parseInt(PORTTextField.getText());
             serverPortServer = parseInt(SERVERPORTTextField.getText());
@@ -303,9 +303,9 @@ public class LoadBalancer extends javax.swing.JFrame {
             STATUSLabel.setVisible(true);
             return;
         }
-
+        //Thread to recieve information from Servers 
         SwingWorker worker = new SwingWorker<Boolean, Integer>() {
-
+            
             @Override
             protected Boolean doInBackground() throws Exception {
                 {
@@ -345,15 +345,19 @@ public class LoadBalancer extends javax.swing.JFrame {
                         DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
                         try {
                             String str = dataInputStream2.readUTF();
+                            //If Server asks to connect
                             if ("ImAliveServer".equals(str)) {
+                                //Write and send the Id to the new Server
                                 System.out.println("Sending new Server ID->" + numberOfServers);
                                 dataOutputStream.writeUTF(String.valueOf(numberOfServers) + ";Server");
                                 dataOutputStream.flush();
-
+                                //Save new server on various hashtables, connectedServers and initialize requests arrayList for the server
                                 allServerSocketsConnected.put(numberOfServers, s2);
                                 allRequestsOnEachServer.put(numberOfServers, new ArrayList<String>());
+                                //Create a Thread that only reads replies from this Server!
                                 LoadBalancerRequestReceiver receiveRequests = new LoadBalancerRequestReceiver(allClientsSocketsConnected, s2, allRequestsOnEachServer);
                                 receiveRequests.start();
+                                //Update Gui
                                 StringBuilder newTextArea = new StringBuilder();
                                 allServerSocketsConnected.keySet().forEach(key -> {
                                     newTextArea.append("Server ID:")
@@ -365,7 +369,7 @@ public class LoadBalancer extends javax.swing.JFrame {
                                 SERVERSTEXTAREA.setText(newTextArea.toString());
                                 numberOfServers++;
                                 nServers.setText(String.valueOf(numberOfServers));
-
+                              //Case if someone puts the wrong Port
                             } else if ("ImAliveClient".equals(str) || "ImAliveMonitor".equals(str)) {
                                 System.out.println("CLIENT TRIED TO ENTER PORT SERVER");
                                 dataOutputStream.writeUTF("999;Server");
@@ -439,9 +443,10 @@ public class LoadBalancer extends javax.swing.JFrame {
                         DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
                         try {
                             String str = dataInputStream2.readUTF();
+                            //If a new Client is Asking to connect
                             if ("ImAliveClient".equals(str)) {
                                 System.out.println("Sending new Client ID->" + numberOfClients);
-
+                                //update Gui and some variables
                                 dataOutputStream.writeUTF(String.valueOf(numberOfClients) + ";Client");
                                 allClientsSocketsConnected.put(numberOfClients, s2);
                                 StringBuilder newTextArea = new StringBuilder();
@@ -455,12 +460,15 @@ public class LoadBalancer extends javax.swing.JFrame {
                                 CLIENTSTEXTAREA.setText(newTextArea.toString());
                                 numberOfClients++;
                                 nClients.setText(String.valueOf(numberOfClients));
+                                //Case the User puts the wrong Port
                             } else if ("ImAliveServer".equals(str) || "ImAliveMonitor".equals(str)) {
                                 System.out.println("SERVER TRIED TO ENTER CLIENT");
                                 dataOutputStream.writeUTF("999;Client");
                                 dataOutputStream.flush();
                             } else {
+                                //Case its not a new client put a Request from a client
                                 System.out.println("else- " + str);
+                                //Create a thread to ONLY dispatch the request to a server
                                 LoadBalancerRequest loadBalancerRequest = new LoadBalancerRequest(str, allServerSocketsConnected, serverSocketMonitor, allClientsSocketsConnected, allRequestsOnEachServer, 9999999);
                                 loadBalancerRequest.start();
                             }
@@ -534,20 +542,24 @@ public class LoadBalancer extends javax.swing.JFrame {
                         DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
                         try {
                             String str = dataInputStream2.readUTF();
+                            //If Monitor Wants to connect
                             if ("ImAliveMonitor".equals(str)) {
-                                System.out.println("Sending new Monitor ID->" + 999);
-                                System.out.println(s2);
+                                System.out.println("Sending new Monitor");
                                 dataOutputStream.writeUTF("999;Monitor");
+                                //Case if user puts wrong Port
                             } else if ("ImAliveServer".equals(str) || "ImAliveClient".equals(str)) {
                                 System.out.println("SERVER TRIED TO ENTER CLIENT");
                                 dataOutputStream.writeUTF("999;Client");
                                 dataOutputStream.flush();
+                                //if monitor says a server has died
                             } else if (str.contains("Dead;")) {
 
                                 String[] arrOfStr = str.split(";", -2);
                                 System.out.println("LB_MONITOR-> THIS SERVER DIED->" + arrOfStr[1]);
+                                //Remove the dead server from connected Server List and the respective Thread
                                 allServerSocketsConnected.remove(parseInt(arrOfStr[1]));
                                 allServerReceiverThreads.remove(parseInt(arrOfStr[1]));
+                                //Update Gui
                                 StringBuilder newTextArea = new StringBuilder();
                                 nServers.setText(String.valueOf(allServerSocketsConnected.size()));
                                 allServerSocketsConnected.keySet().forEach(key -> {
@@ -559,22 +571,23 @@ public class LoadBalancer extends javax.swing.JFrame {
                                 });
                                 SERVERSTEXTAREA.setText(newTextArea.toString());
 
-                                //in case the server had work
+                                //in case the server had work (Same temporary the requests)
                                 ArrayList<String> temporaryRequests = new ArrayList<>();
                                 if (!allRequestsOnEachServer.get(parseInt(arrOfStr[1])).isEmpty()) {
                                     for (int i = 0; i < allRequestsOnEachServer.get(parseInt(arrOfStr[1])).size(); i++) {
                                         temporaryRequests.add(allRequestsOnEachServer.get(parseInt(arrOfStr[1])).get(i).toString());
                                     }
                                 }
+                                //Remove server from the HashTable with the requests
                                 allRequestsOnEachServer.remove(parseInt(arrOfStr[1]));
                                 
-                                //get All keys
-
+                                //Put a temporary id to represent the servers that are still online
                                 ArrayList<Integer> servers = new ArrayList<>();
                                 allServerSocketsConnected.keySet().forEach(key -> {
                                     servers.add(key);
                                 });
                                 
+                                //Distribute the Requests for each Server
                                 int distribute = 0;
                                 for (int i = 0; i < temporaryRequests.size(); i++) {
                                     if(distribute >= servers.size())

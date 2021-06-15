@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import static java.lang.Integer.parseInt;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,6 +22,7 @@ import javax.swing.SwingWorker;
  * @author António Ramos and Miguel Silva
  */
 public class Client extends javax.swing.JFrame {
+
     private int click = 0;
 
     private int numberOfRequests;
@@ -31,6 +33,7 @@ public class Client extends javax.swing.JFrame {
     private boolean infiniteWhile = true;
     HashMap<Integer, String> allPendingRequests;
     HashMap<Integer, String> allExecutedRequests;
+    ArrayList<String> allExecutedRequestsList = new ArrayList<>();
 
     /**
      * Constructor of Client
@@ -340,17 +343,16 @@ public class Client extends javax.swing.JFrame {
         if (this.connectedSocket == null) {
             return;
         }
-        
+
         int iteracions = Integer.parseInt(niter.getText());
-        if(iteracions >= 1){
+        if (iteracions >= 1) {
             ClientRequest clientRequest = new ClientRequest(pendRequests, this.numberOfRequests, this.id, iteracions, portId, allPendingRequests, PENDINGTEXTAREA);
             clientRequest.start();
-        }else{
+        } else {
             helpTXT.setForeground(Color.red);
             helpTXT.setVisible(true);
         }
-        
-       
+
         this.numberOfRequests++;
     }//GEN-LAST:event_ReqButActionPerformed
 
@@ -468,8 +470,9 @@ public class Client extends javax.swing.JFrame {
                     String[] arrOfStr = requestInfo.split(Pattern.quote("|"), -2);
                     allPendingRequests.remove(parseInt(arrOfStr[1]));
                     System.out.println(allPendingRequests.toString());
+                    allExecutedRequestsList.add(requestInfo);
                     allExecutedRequests.put(parseInt(arrOfStr[1]), requestInfo);
-                    System.out.println(allExecutedRequests.size() + "--");
+                    System.out.println(allExecutedRequestsList.size() + "--");
                     if (!allPendingRequests.isEmpty()) {
                         StringBuilder newTextArea = new StringBuilder();
                         allPendingRequests.keySet().forEach(key -> {
@@ -488,13 +491,11 @@ public class Client extends javax.swing.JFrame {
                     pendRequests.setText(String.valueOf(allPendingRequests.size()));
 
                     exProcess.setText(String.valueOf(allExecutedRequests.size()));
-                    allExecutedRequests.keySet().forEach(key -> {
+                    for (int i = 0; i < allExecutedRequestsList.size(); i++) {
                         newTextArea2.append("Request-")
-                                .append(key)
-                                .append(" : ")
-                                .append(allExecutedRequests.get(key))
-                                .append("\n");
-                    });
+                                .append(allExecutedRequestsList.get(i)+"\n");
+                    }
+
                     EXECUTEDTEXTAREA.setText(newTextArea2.toString());
                     System.out.println("CLIENT->" + requestInfo);
                 }
@@ -513,7 +514,7 @@ public class Client extends javax.swing.JFrame {
     }//GEN-LAST:event_ConButActionPerformed
 
     private void helpBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_helpBtnActionPerformed
-        if(click == 0){
+        if (click == 0) {
             helpTXT.setVisible(true);
             helpTXT2.setVisible(true);
             helpTXT3.setVisible(true);
@@ -523,7 +524,7 @@ public class Client extends javax.swing.JFrame {
             helpTXT7.setVisible(true);
             helpTXT8.setVisible(true);
             click++;
-        }else{
+        } else {
             helpTXT.setVisible(false);
             helpTXT2.setVisible(false);
             helpTXT3.setVisible(false);

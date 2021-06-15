@@ -42,6 +42,7 @@ public class LoadBalancerRequestReceiver extends Thread {
     public void run() {
         while (true) {
             try {
+                //Read incoming requests from server
                 DataInputStream dataInputStream = new DataInputStream(s2.getInputStream());
                 str = dataInputStream.readUTF();
             } catch (IOException ex) {
@@ -52,30 +53,35 @@ public class LoadBalancerRequestReceiver extends Thread {
             if (str == null) {
                 break;
             }
-            String[] arrOfStr = str.split("[|]", -2);
-
-            for (int i = 0; i < allRequestsOnEachServer.size(); i++) {
-                int match2 = 0;
-                if (allRequestsOnEachServer.get(parseInt(arrOfStr[2])).isEmpty()) {
-                    continue;
-                }
-                String savedRequestsServer = (String) allRequestsOnEachServer.get(parseInt(arrOfStr[2])).get(i);
-                System.out.println(savedRequestsServer);
-                String[] arrOfStrSavedServer = str.split("[|]", -2);
-                System.out.println(arrOfStr[0] + "-" + arrOfStrSavedServer[0]);
-                if (arrOfStrSavedServer[0].equals(arrOfStr[0])) {
-                    match2++;
-                }
-                System.out.println(arrOfStr[1] + "-" + arrOfStrSavedServer[1]);
-                if (arrOfStrSavedServer[1].equals(arrOfStr[1])) {
-                    match2++;
-                }
-                if (match2 == 2) {
-                    allRequestsOnEachServer.get(parseInt(arrOfStr[2])).remove(i);
-                    break;
-                }
+        String[] arrOfStr = str.split("[|]", -2);
+        
+        //
+        for(int i = 0 ; i < allRequestsOnEachServer.get(parseInt(arrOfStr[2])).size() ;i++)
+        {
+            int match2=0;
+ 
+            //Get array of requests of server that sent back the request
+            String[] arrOfStrSavedServer = allRequestsOnEachServer.get(parseInt(arrOfStr[2])).get(i).toString().split("[|]", -2);
+ 
+            System.out.println(arrOfStr[0]+"-"+arrOfStrSavedServer[0]);
+            //Logic to remove the the incoming request from the HashTable
+            if(arrOfStrSavedServer[0].equals(arrOfStr[0]))
+            {
+                match2++;
             }
-
+            System.out.println(arrOfStr[1]+"-"+arrOfStrSavedServer[1]);
+            if(arrOfStrSavedServer[1].equals(arrOfStr[1]))
+            {
+                match2++;
+            }
+            if(match2 == 2)
+            {
+                //Remove the request that the server replied
+                allRequestsOnEachServer.get(parseInt(arrOfStr[2])).remove(i);
+                break;
+            }
+        }
+            //Send it back to the client
             System.out.println(allClientsSocketsConnected.get(parseInt(arrOfStr[0])).toString());
             OutputStream outputStreamClient = null;
             try {

@@ -118,7 +118,7 @@ public class Monitor extends javax.swing.JFrame {
         jScrollPane3.setViewportView(EXECUTEDTEXTAREA);
 
         jLabel6.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        jLabel6.setText("Requests Each Server:");
+        jLabel6.setText("ThreadsWorking on Each Server:");
 
         REQUESTSEACHSERVER.setColumns(20);
         REQUESTSEACHSERVER.setRows(5);
@@ -260,6 +260,7 @@ public class Monitor extends javax.swing.JFrame {
      */
     
     private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
+        //Worker that connects the monitor with the LB and replies the LB with info when LB asks
         SwingWorker worker = new SwingWorker<Boolean, Integer>() {
 
             @Override
@@ -320,7 +321,7 @@ public class Monitor extends javax.swing.JFrame {
 
                 } catch (IOException e) {
                 }
-
+                //Waiting of LB asks for info on the state and Requests per server
                 while (true) {
                     String requestInfo = dataInputStream.readUTF();
                     System.out.println("LB_MONITOR->" + requestInfo);
@@ -391,6 +392,7 @@ public class Monitor extends javax.swing.JFrame {
                     String str = dataInputStream2.readUTF();
                     System.out.println(str + monitorPort);
                     String[] arrOfStr = str.split(";", -2);
+                    //connects monitor with the server and 
                     if ("ImAliveMonitor".equals(arrOfStr[0])) {
                         System.out.println("SERVER VIVO!" + arrOfStr[1]);
                         dataOutputStream.writeUTF("MonitorAc");
@@ -405,6 +407,7 @@ public class Monitor extends javax.swing.JFrame {
                         });
                         System.out.println(newTextArea.toString());
                         EXECUTEDTEXTAREA1.setText(newTextArea.toString());
+                        //Executes a threads for a server 
                         MonitorHeartBeat HB = new MonitorHeartBeat(s2, allServerSocketsConnected, parseInt(arrOfStr[1]), EXECUTEDTEXTAREA1, EXECUTEDTEXTAREA, allServerSocketsDisconnected, portId, numberOfWorkLoadEachThreadServer,allRequestsOnEachServer, REQUESTSEACHSERVER);
                         HB.start();
                     }
