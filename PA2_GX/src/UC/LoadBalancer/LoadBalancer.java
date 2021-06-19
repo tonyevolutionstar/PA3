@@ -368,7 +368,7 @@ public class LoadBalancer extends javax.swing.JFrame {
                                 });
                                 SERVERSTEXTAREA.setText(newTextArea.toString());
                                 numberOfServers++;
-                                nServers.setText(String.valueOf(numberOfServers));
+                                nServers.setText(String.valueOf(allServerSocketsConnected.size()));
                               //Case if someone puts the wrong Port
                             } else if ("ImAliveClient".equals(str) || "ImAliveMonitor".equals(str)) {
                                 System.out.println("CLIENT TRIED TO ENTER PORT SERVER");

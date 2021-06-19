@@ -334,7 +334,7 @@ public class Server extends javax.swing.JFrame {
             //To avoid spamming connect key
             return;
         }
-
+        //WORK_3
         //Thread that comunicates with the LoadBalancer
         SwingWorker worker = new SwingWorker<Boolean, Integer>() {
 
